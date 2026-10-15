@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta sprintt -->
+    <color name="brand_primary">#6366F1</color>
+    <color name="brand_primary_dark">#4F46E5</color>
+    <color name="brand_primary_light">#EEF2FF</color>
+    <color name="brand_accent">#06B6D4</color>
+    
+    <color name="jira_blue_primary">#6366F1</color>
+    <color name="jira_blue_dark">#4F46E5</color>
+    <color name="jira_blue_light">#EEF2FF</color>
+    <color name="jira_accent">#06B6D4</color>
+
+    <color name="status_todo_bg">#DFE1E6</color>
+    <color name="status_todo_text">#42526E</color>
+    <color name="status_in_progress_bg">#DEEBFF</color>
+    <color name="status_in_progress_text">#0747A6</color>
+    <color name="status_done_bg">#E3FCEF</color>
+    <color name="status_done_text">#006644</color>
+
+    <!-- Cores dos tipos de Issue -->
+    <color name="issue_type_story">#36B37E</color>
+    <color name="issue_type_bug">#FF5630</color>
+    <color name="issue_type_task">#4C9AFF</color>
+    <color name="issue_type_epic">#6554C0</color>
+
+    <!-- Cores de Prioridade -->
+    <color name="priority_highest">#FF5630</color>
+    <color name="priority_high">#FF7452</color>
+    <color name="priority_medium">#FFAB00</color>
+    <color name="priority_low">#36B37E</color>
+    <color name="priority_lowest">#0065FF</color>
+
+    <color name="bg_screen">#F4F5F7</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="text_primary">#172B4D</color>
+    <color name="text_secondary">#6B778C</color>
+    <color name="divider_color">#EBECF0</color>
+
+    <!-- Cores Administrativas Corporativas -->
+    <color name="admin_server_online">#10B981</color>
+    <color name="admin_server_badge_bg">#ECFDF5</color>
+    <color name="admin_action_web">#0052CC</color>
+    <color name="admin_action_reports">#7C3AED</color>
+    <color name="admin_action_swagger">#059669</color>
+    <color name="admin_action_project">#D97706</color>
+    <color name="admin_action_user">#4F46E5</color>
+    <color name="admin_card_border">#E2E8F0</color>
+</resources>

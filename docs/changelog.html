@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprintt - Changelog & Histórico de Alterações</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+</head>
+<body>
+
+  <!-- Barra de Navegação Superior -->
+  <header class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span class="logo-badge">SPRINTT</span>
+      <span>TicketMaster Docs</span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">Visão Geral</a>
+      <a href="index.html#arquitetura">Arquitetura</a>
+      <a href="index.html#ssl">SSL & mDNS</a>
+      <a href="index.html#api">API REST</a>
+      <a href="changelog.html" style="color: var(--brand-blue); font-weight: 700;">Changelog</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="rootCA.pem" download="rootCA.pem" class="btn btn-emerald">📥 Baixar Certificado CA</a>
+      <a href="https://sprintt.local:8443/projetos" target="_blank" class="btn btn-primary">Abrir sprintt.local ↗</a>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <section class="hero" style="padding-bottom: 2rem;">
+      <div class="hero-badges">
+        <span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border-color: rgba(52, 211, 153, 0.3);">Versão v1.2.0</span>
+        <span class="badge">Histórico Detalhado</span>
+      </div>
+      <h1>Registro de Alterações (Changelog)</h1>
+      <p>Documentação minuciosa de todas as modificações, correções de bugs, novas APIs e melhorias implementadas na arquitetura do Sprintt.</p>
+    </section>
+
+    <!-- Linha do Tempo de Modificações -->
+    <div style="display: flex; flex-direction: column; gap: 2.5rem; margin-top: 1.5rem;">
+
+      <!-- 1. BATERIA -->
+      <div class="card" style="border-left: 4px solid var(--brand-blue);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="margin-bottom: 0.5rem;">NOVA FEATURE</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">1. Telemetria e Alerta de Bateria do Servidor Web</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">service / web</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Permite que qualquer desenvolvedor conectado via navegador monitore o consumo de energia do aparelho físico Android que hospeda o servidor, prevenindo desligamentos inesperados no meio do desenvolvimento de uma sprint.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Arquivos Modificados & Criados:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>ServerBatteryProvider.kt</code>: Registra um <code>BroadcastReceiver</code> para <code>Intent.ACTION_BATTERY_CHANGED</code> e extrai nível percentual, se está em carga e o tipo de tomada (AC, USB ou Bateria).</li>
+          <li><code>ServerApiController.kt</code>: Expõe o endpoint JSON <code>GET /api/v1/server/battery</code> e <code>/api/v1/server/telemetry</code>.</li>
+          <li><code>jira.css</code>: Criadas classes de estilo <code>.server-battery-pill</code>, <code>.server-battery-toast</code> com pulso luminoso animado e alerta em vermelho para carga &lt; 20%.</li>
+          <li>Templates HTML (<code>jira_board.html</code>, <code>jira_backlog.html</code>, <code>jira_projects.html</code>, <code>jira_reports.html</code>): Inserido o indicador dinâmico no topo e script assíncrono com polling inteligente a cada 30 segundos.</li>
+        </ul>
+      </div>
+
+      <!-- 2. SSL mDNS -->
+      <div class="card" style="border-left: 4px solid var(--brand-indigo);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="background: rgba(129, 140, 248, 0.15); color: #818cf8; border-color: rgba(129, 140, 248, 0.3); margin-bottom: 0.5rem;">CORREÇÃO DE SEGURANÇA</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">2. Resolução do Alerta "Não Seguro" em https://sprintt.local</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">security / assets</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Os navegadores modernos (Chrome, Edge, Firefox) rejeitavam o certificado por ausência de Subject Alternative Name (SAN) cobrindo o endereço mDNS <code>sprintt.local</code>.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Ações Realizadas:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li>Regenerado o keystore PKCS12 (<code>app/src/main/assets/keystore.p12</code>) via <code>mkcert</code> com SANs ampliados: <code>sprintt.local</code>, <code>*.sprintt.local</code>, <code>ticketmaster.local</code>, <code>localhost</code>, <code>127.0.0.1</code> e <code>::1</code>.</li>
+          <li>Adicionado o certificado raiz da CA em <code>app/src/main/assets/static/rootCA.pem</code> e <code>docs/rootCA.pem</code>.</li>
+          <li><code>RootWebController.kt</code>: Criadas as rotas <code>GET /cert/rootCA.pem</code> e <code>GET /rootCA.pem</code> para permitir download do certificado em 1 clique.</li>
+          <li>Integrado o componente modal <code>#sslModal</code> com passo a passo ilustrado de instalação em todas as páginas web.</li>
+        </ul>
+      </div>
+
+      <!-- 3. SPRINT TICKETS LEAK -->
+      <div class="card" style="border-left: 4px solid var(--brand-amber);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); margin-bottom: 0.5rem;">BUGFIX</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">3. Isolamento Estrito de Tickets na Sprint Ativa</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">web / kanban</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Corrigido o comportamento em que tickets do Product Backlog ou de sprints futuras apareciam no quadro Kanban da Sprint Ativa quando o projeto não possuía uma sprint ativa iniciada.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Mudanças no Código:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>JiraWebController.kt</code>: Refatorada a função <code>buildBoardModelAndView()</code>. O fallback anterior <code>repo.getIssuesByProject(activeKey)</code> foi substituído por <code>emptyList()</code> caso nenhuma sprint esteja com status <code>ACTIVE</code>.</li>
+          <li><code>jira_board.html</code> & <code>jira_kanban_grid.html</code>: Adicionada a flag condicional Mustache <code>{{#hasActiveSprint}} ... {{/hasActiveSprint}}</code>. Quando inativa, o quadro apresenta uma mensagem amigável com botão de ação rápida direcionando para o Backlog.</li>
+          <li>Modal de criação rápida no Kanban atualizado para injetar automaticamente o <code>activeSprintId</code> nos novos tickets.</li>
+        </ul>
+      </div>
+
+      <!-- 4. ANALYTICS NATIVO -->
+      <div class="card" style="border-left: 4px solid var(--brand-emerald);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border-color: rgba(52, 211, 153, 0.3); margin-bottom: 0.5rem;">NOVA INTERFACE</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">4. Aba Analítica Nativa no Aplicativo Android</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">ui / mobile</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Inclusão de uma tela nativa de inteligência de projeto diretamente no aplicativo móvel para acompanhamento de métricas sem necessidade de abrir o navegador.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Componentes Criados:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>fragment_analytics.xml</code>: Layout com seletor de projetos, card de saúde da sprint (taxa de entrega percentual e burndown), barras de distribuição por status (TODO, IN PROGRESS, DONE), gráficos por tipo de tarefa (Story, Task, Bug, Epic) e carga de trabalho por membro da equipe.</li>
+          <li><code>AnalyticsFragment.kt</code>: Fragment que consome o banco de dados Room (<code>TicketMasterRepository</code>) de forma reativa e atualiza os indicadores em tempo real.</li>
+          <li><code>MainActivity.kt</code>: Adicionada a aba "Analíticos" ao <code>TabLayout</code> e configurada a alternância suave no <code>FragmentManager</code>, ocultando o FloatingActionButton quando a aba analítica estiver visível.</li>
+        </ul>
+      </div>
+
+      <!-- 5. DOCS E GITHUB PAGES -->
+      <div class="card" style="border-left: 4px solid #38bdf8;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="margin-bottom: 0.5rem;">DOCUMENTAÇÃO</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">5. Suíte de Documentação e Deploy no GitHub Pages</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">docs / pages</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Criação da pasta estática <code>docs/</code> na raiz do projeto contendo toda a documentação da arquitetura do sistema, manuais de segurança e referências de API, otimizada para publicação gratuita e instantânea via GitHub Pages.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Itens Integrados:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>docs/index.html</code>: Portal de documentação com visão geral, arquitetura cliente-servidor, guia passo a passo para SSL, tabela de endpoints REST e instruções de ativação.</li>
+          <li><code>docs/changelog.html</code>: Histórico detalhado de alterações (esta página).</li>
+          <li><code>docs/style.css</code>: Folha de estilos moderna com design escuro, tipografia de alta legibilidade e responsividade total.</li>
+          <li><code>docs/rootCA.pem</code> e <code>docs/assets/rootCA.crt</code>: Arquivos de certificado para download direto pelos usuários do sistema.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div style="margin-top: 3.5rem; text-align: center;">
+      <a href="index.html" class="btn btn-secondary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">&larr; Voltar para a Documentação Principal</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="container" style="padding: 1rem 1.5rem;">
+      <p>Sprintt (TicketMaster) Engine &bull; Histórico de Alterações &bull; Hospedado com GitHub Pages</p>
+    </div>
+  </footer>
+
+</body>
+</html>

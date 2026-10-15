@@ -1,0 +1,82 @@
+{{#hasIssue}}
+<div class="modal-backdrop" id="issueDetailBackdrop" onclick="closeIssueDetailModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="issue-key" style="font-size: 1.1rem;">{{issue.key}}</span>
+                <span class="issue-type-badge type-{{issue.type}}">{{issue.type}}</span>
+                <span class="status-badge status-{{issue.status}}">{{issue.status}}</span>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeIssueDetailModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <h2 style="font-size: 1.3rem; margin-bottom: 12px; color: #172B4D;">{{issue.title}}</h2>
+
+            <div class="detail-section">
+                <label class="detail-label">Descrição</label>
+                <div class="detail-desc-box">
+                    {{#issue.description}}
+                    <p style="white-space: pre-wrap;">{{issue.description}}</p>
+                    {{/issue.description}}
+                    {{^issue.description}}
+                    <p style="color: #6B778C; font-style: italic;">Nenhuma descrição detalhada informada.</p>
+                    {{/issue.description}}
+                </div>
+            </div>
+
+            <!-- Sugestão de Branch Git -->
+            <div class="detail-section">
+                <label class="detail-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 4px;">
+                        <line x1="6" y1="3" x2="6" y2="15"></line>
+                        <circle cx="18" cy="6" r="3"></circle>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <path d="M18 9a9 9 0 0 1-9 9"></path>
+                    </svg>
+                    Nomenclatura Sugerida da Branch Git
+                </label>
+                <div class="git-branch-container">
+                    <input type="text" id="gitBranchInput" class="git-branch-input" value="{{issue.suggestedGitBranch}}" readonly>
+                    <button type="button" class="btn-copy" onclick="copyGitBranch()">
+                        <span id="copyBtnText">Copiar Branch</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <label class="detail-label">Responsável</label>
+                    <div style="font-weight: 600; color: #172B4D;">👤 {{issue.assignee}}</div>
+                </div>
+                <div class="detail-field">
+                    <label class="detail-label">Prioridade</label>
+                    <div style="font-weight: 600; color: #172B4D;">{{issue.priority}}</div>
+                </div>
+                <div class="detail-field">
+                    <label class="detail-label">Story Points</label>
+                    <div><span class="story-point-badge">{{issue.storyPoints}} SP</span></div>
+                </div>
+                <div class="detail-field">
+                    <label class="detail-label">Projeto</label>
+                    <div style="font-weight: 600; color: #0052CC;">{{issue.projectKey}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeIssueDetailModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+{{/hasIssue}}
+{{^hasIssue}}
+<div class="modal-backdrop" onclick="closeIssueDetailModal(event)">
+    <div class="modal-dialog">
+        <div class="modal-body" style="padding: 24px; text-align: center;">
+            <p style="color: #FF5630; font-weight: bold;">Ticket não encontrado.</p>
+            <button type="button" class="btn-secondary" style="margin-top: 16px;" onclick="closeIssueDetailModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+{{/hasIssue}}

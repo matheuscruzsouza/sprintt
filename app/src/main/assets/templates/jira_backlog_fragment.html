@@ -1,0 +1,199 @@
+<div class="backlog-container">
+
+    <!-- 1. SPRINT ATIVA -->
+    <div class="sprint-panel sprint-dropzone" 
+         data-sprint-id="{{activeSprintId}}"
+         ondragover="handleBacklogDragOver(event)" 
+         ondragleave="handleBacklogDragLeave(event)" 
+         ondrop="handleBacklogDrop(event, '{{activeSprintId}}')">
+        <div class="sprint-panel-header">
+            <div class="sprint-title-area">
+                {{#hasActiveSprint}}
+                <span class="sprint-badge-status sprint-ACTIVE">Sprint Ativa</span>
+                <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">{{activeSprintName}}</h2>
+                {{/hasActiveSprint}}
+                {{^hasActiveSprint}}
+                <span class="sprint-badge-status sprint-COMPLETED">Sem Sprint Ativa</span>
+                <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-secondary);">Nenhuma Sprint em Execução</h2>
+                {{/hasActiveSprint}}
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="sprint-meta-text">{{activeSprintPoints}} Story Points</span>
+                {{#hasActiveSprint}}
+                <a href="/projetos/{{currentProjectKey}}/sprint" class="btn-primary" style="font-size: 0.8rem; padding: 6px 12px;">
+                    Ver Sprint Ativa no Kanban ➔
+                </a>
+                <button type="button" 
+                        class="btn-outline" 
+                        style="font-size: 0.8rem; padding: 6px 12px; color: #EF4444; border-color: #EF4444;"
+                        hx-put="/api/v1/sprints/{{activeSprintId}}/complete"
+                        hx-target="#backlog-fragment-container"
+                        hx-swap="innerHTML">
+                    Concluir Sprint
+                </button>
+                {{/hasActiveSprint}}
+            </div>
+        </div>
+
+        {{#hasActiveSprint}}
+        <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-secondary);">
+            <strong>Meta:</strong> {{activeSprintGoal}}
+        </div>
+        {{/hasActiveSprint}}
+
+        <div class="sprint-issues-list">
+            {{#activeSprintIssues}}
+            <div class="backlog-issue-item"
+                 draggable="true"
+                 data-key="{{key}}"
+                 ondragstart="handleBacklogDragStart(event, '{{key}}')"
+                 ondragend="handleBacklogDragEnd(event)">
+                <div class="backlog-issue-left">
+                    <span class="drag-handle-indicator">⋮⋮</span>
+                    <span class="issue-key">{{key}}</span>
+                    <span class="issue-type-badge type-{{type}}">{{type}}</span>
+                    <span class="backlog-issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container">{{title}}</span>
+                </div>
+                <div class="backlog-issue-right">
+                    <span class="status-badge status-{{status}}">{{status}}</span>
+                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                    <span class="assignee-badge">@{{assignee}}</span>
+                </div>
+            </div>
+            {{/activeSprintIssues}}
+
+            {{^activeSprintIssues}}
+            <div class="empty-state-box">
+                Nenhum ticket alocado para a sprint ativa. Arraste itens para cá para começar.
+            </div>
+            {{/activeSprintIssues}}
+        </div>
+    </div>
+
+    <!-- 2. SPRINTS FUTURAS (PLANEJAMENTO) -->
+    <div class="sprint-panel" style="border-left: 4px solid var(--accent);">
+        <div class="sprint-panel-header">
+            <div class="sprint-title-area">
+                <span class="sprint-badge-status sprint-PLANNING">Planejamento</span>
+                <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">Sprints Futuras (Próximos Ciclos)</h2>
+            </div>
+            <button type="button" class="btn-primary" onclick="openCreateSprintModal()" style="font-size: 0.8rem; padding: 6px 12px;">
+                + Criar Sprint Futura
+            </button>
+        </div>
+
+        {{#hasFutureSprints}}
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            {{#futureSprints}}
+            <div class="sprint-dropzone" 
+                 data-sprint-id="{{id}}"
+                 ondragover="handleBacklogDragOver(event)" 
+                 ondragleave="handleBacklogDragLeave(event)" 
+                 ondrop="handleBacklogDrop(event, '{{id}}')"
+                 style="background-color: var(--bg-column); border-radius: 8px; padding: 14px 18px; border: 1px solid var(--border-subtle); transition: background-color 0.2s, border-color 0.2s;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div>
+                        <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">{{name}}</h3>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">Meta: {{goal}}</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="sprint-meta-text">{{totalPoints}} SP • {{issuesCount}} tickets</span>
+                        <button type="button" 
+                                class="btn-primary" 
+                                style="font-size: 0.78rem; padding: 5px 10px; background-color: var(--color-done);"
+                                hx-put="/api/v1/sprints/{{id}}/start"
+                                hx-target="#backlog-fragment-container"
+                                hx-swap="innerHTML">
+                            ▶ Iniciar Sprint
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sprint-issues-list">
+                    {{#issues}}
+                    <div class="backlog-issue-item" 
+                         style="background-color: var(--bg-surface);"
+                         draggable="true"
+                         data-key="{{key}}"
+                         ondragstart="handleBacklogDragStart(event, '{{key}}')"
+                         ondragend="handleBacklogDragEnd(event)">
+                        <div class="backlog-issue-left">
+                            <span class="drag-handle-indicator">⋮⋮</span>
+                            <span class="issue-key">{{key}}</span>
+                            <span class="issue-type-badge type-{{type}}">{{type}}</span>
+                            <span class="backlog-issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container">{{title}}</span>
+                        </div>
+                        <div class="backlog-issue-right">
+                            <span class="story-point-badge">{{storyPoints}} SP</span>
+                            <span class="assignee-badge">@{{assignee}}</span>
+                        </div>
+                    </div>
+                    {{/issues}}
+
+                    {{^issues}}
+                    <div style="font-size: 0.82rem; color: var(--text-muted); font-style: italic; padding: 8px 0;">
+                        Nenhum ticket atribuído. Arraste tarefas para cá para planejar esta sprint.
+                    </div>
+                    {{/issues}}
+                </div>
+            </div>
+            {{/futureSprints}}
+        </div>
+        {{/hasFutureSprints}}
+
+        {{^hasFutureSprints}}
+        <div class="empty-state-box">
+            Nenhuma sprint futura planejada. Crie uma nova sprint para organizar as próximas entregas.
+        </div>
+        {{/hasFutureSprints}}
+    </div>
+
+    <!-- 3. PRODUCT BACKLOG (DEMANDAS NÃO PLANEJADAS) -->
+    <div class="sprint-panel sprint-dropzone" 
+         data-sprint-id="null"
+         ondragover="handleBacklogDragOver(event)" 
+         ondragleave="handleBacklogDragLeave(event)" 
+         ondrop="handleBacklogDrop(event, 'null')">
+        <div class="sprint-panel-header">
+            <div class="sprint-title-area">
+                <span class="sprint-badge-status" style="background-color: var(--bg-column); color: var(--text-secondary);">Backlog Geral</span>
+                <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">Product Backlog</h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="sprint-meta-text">{{backlogPoints}} SP • {{backlogIssuesCount}} tarefas futuras</span>
+                <button type="button" class="btn-primary" onclick="openCreateModal()" style="font-size: 0.8rem; padding: 6px 12px;">
+                    + Criar Ticket
+                </button>
+            </div>
+        </div>
+
+        <div class="sprint-issues-list">
+            {{#backlogIssues}}
+            <div class="backlog-issue-item"
+                 draggable="true"
+                 data-key="{{key}}"
+                 ondragstart="handleBacklogDragStart(event, '{{key}}')"
+                 ondragend="handleBacklogDragEnd(event)">
+                <div class="backlog-issue-left">
+                    <span class="drag-handle-indicator">⋮⋮</span>
+                    <span class="issue-key">{{key}}</span>
+                    <span class="issue-type-badge type-{{type}}">{{type}}</span>
+                    <span class="backlog-issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container">{{title}}</span>
+                </div>
+                <div class="backlog-issue-right">
+                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                    <span class="assignee-badge">@{{assignee}}</span>
+                </div>
+            </div>
+            {{/backlogIssues}}
+
+            {{^backlogIssues}}
+            <div class="empty-state-box">
+                O backlog do produto está vazio. Crie novas tarefas para planejar futuros ciclos.
+            </div>
+            {{/backlogIssues}}
+        </div>
+    </div>
+
+</div>

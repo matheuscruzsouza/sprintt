@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprintt (TicketMaster) - Documentação do Sistema</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+</head>
+<body>
+
+  <!-- Barra de Navegação Superior -->
+  <header class="navbar">
+    <a href="#" class="nav-brand">
+      <span class="logo-badge">SPRINTT</span>
+      <span>TicketMaster Docs</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#arquitetura">Arquitetura</a>
+      <a href="#bateria">Bateria & Telemetria</a>
+      <a href="#ssl">SSL & Certificados</a>
+      <a href="#sprints">Sprints & Kanban</a>
+      <a href="#api">API REST</a>
+      <a href="#deploy">Deploy Pages</a>
+      <a href="changelog.html" style="color: var(--brand-blue); font-weight: 600;">Changelog</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="rootCA.pem" download="rootCA.pem" class="btn btn-emerald">📥 Baixar Certificado CA</a>
+      <a href="https://sprintt.local:8443/projetos" target="_blank" class="btn btn-primary">Abrir sprintt.local ↗</a>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-badges">
+        <span class="badge">🚀 NanoSpring Server</span>
+        <span class="badge">🔒 HTTPS / TLS mDNS</span>
+        <span class="badge">⚡ HTMX + Mustache UI</span>
+        <span class="badge">📱 Android 14+ Ready</span>
+      </div>
+      <h1>Sprintt Jira-like Engine</h1>
+      <p>Servidor ágil embarcado em Android para gestão autônoma de projetos locais com mDNS, Kanban dinâmico, telemetria em tempo real e relatórios analíticos integrados.</p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="#ssl" class="btn btn-primary" style="padding: 0.75rem 1.4rem; font-size: 1rem;">Configurar Certificado HTTPS</a>
+        <a href="#api" class="btn btn-secondary" style="padding: 0.75rem 1.4rem; font-size: 1rem;">Ver Especificação de APIs</a>
+        <a href="changelog.html" class="btn btn-secondary" style="padding: 0.75rem 1.4rem; font-size: 1rem;">📋 Histórico de Alterações</a>
+      </div>
+    </section>
+
+    <!-- Resumo dos Destaques -->
+    <div class="features-grid">
+      <div class="card">
+        <div class="card-icon">🔋</div>
+        <h3>Telemetria de Bateria em Tempo Real</h3>
+        <p>Monitoramento contínuo da bateria do dispositivo Android servidor com alertas visuais integrados, badge dinâmico e aviso de bateria fraca (&lt; 20%).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <h3>Zero "Não Seguro" com mDNS</h3>
+        <p>Acesso instantâneo e seguro via <code>https://sprintt.local:8443</code> emitido por autoridade certificadora própria com SAN wildcard e sem depender de internet externa.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <h3>Sprint Ativa com Isolamento Estrito</h3>
+        <p>Quadro Kanban exclusivo que exibe estritamente tickets alocados na Sprint atual em execução, eliminando ruído do backlog ou de sprints futuras.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>Painel Analítico Nativo Android</h3>
+        <p>Nova aba de métricas no app Android com taxa de entrega de sprint, burndown, distribuição por tipo (Story, Bug, Task, Epic) e produtividade do time.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>HTMX & SSR Ultra-Leve</h3>
+        <p>Interface web ágil e veloz renderizada diretamente no Nano-HTTPD com templates JMustache e requisições parciais HTMX sem overhead de node.js ou React.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>Zeroconf & Descoberta Local</h3>
+        <p>Anúncio automático via JmDNS permitindo que qualquer notebook ou celular na mesma rede Wi-Fi encontre o servidor pelo nome <code>sprintt.local</code>.</p>
+      </div>
+    </div>
+
+    <!-- Arquitetura do Sistema -->
+    <section class="section" id="arquitetura">
+      <div class="section-header">
+        <h2>🏗️ Arquitetura do Sistema</h2>
+        <p>O Sprintt é uma solução completa cliente-servidor autocontida rodando como serviço de primeiro plano no Android.</p>
+      </div>
+
+      <div class="code-box">
+┌────────────────────────────────────────────────────────────────────────┐
+│                        DISPOSITIVO ANDROID                             │
+│                                                                        │
+│  ┌───────────────────────┐         ┌────────────────────────────────┐  │
+│  │   UI Nativa Java      │         │     Sprintt Background Svc     │  │
+│  │  - Dashboard          │         │  - NanoHTTPD (Porta 8443 TLS)  │  │
+│  │  - Projetos & Sprints │◄───────►│  - JmDNS ("sprintt.local")     │  │
+│  │  - Equipe             │ SQLite  │  - ServerBatteryProvider       │  │
+│  │  - Analíticos (Novo!) │ (Room)  │  - NanoSpring Dispatcher       │  │
+│  └───────────────────────┘         └───────────────┬────────────────┘  │
+└────────────────────────────────────────────────────┼───────────────────┘
+                                                     │ HTTPS / WSS
+                                                     ▼
+                                      ┌───────────────────────────────┐
+                                      │     Clientes Web da Rede      │
+                                      │  - https://sprintt.local:8443 │
+                                      │  - HTMX / JMustache UI        │
+                                      │  - Telemetria de Bateria      │
+                                      └───────────────────────────────┘
+      </div>
+    </section>
+
+    <!-- Notificação e Telemetria de Bateria -->
+    <section class="section" id="bateria">
+      <div class="section-header">
+        <h2>🔋 Notificação de Bateria do Servidor Web</h2>
+        <p>Como a interface web comunica a saúde energética do aparelho servidor.</p>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+        O módulo <code>ServerBatteryProvider.kt</code> registra um <code>BroadcastReceiver</code> com <code>Intent.ACTION_BATTERY_CHANGED</code> diretamente no contexto do Android.
+        As páginas web (Board, Backlog, Projetos e Relatórios) realizam polling periódico a cada 30 segundos no endpoint <code>/api/v1/server/battery</code> e exibem uma notificação toast automática:
+      </p>
+
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Indicador no Cabeçalho Web:</span>
+          <div class="battery-preview-pill">
+            <span class="dot"></span>
+            <span>Servidor: 85% (Carregando AC)</span>
+          </div>
+        </div>
+
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Endpoint JSON:</span>
+          <span style="color: var(--brand-blue); font-family: var(--font-mono);">GET /api/v1/server/battery</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Guia de Certificados SSL -->
+    <section class="section" id="ssl">
+      <div class="section-header">
+        <h2>🔒 Como Eliminar o "Não Seguro" (SSL/mDNS)</h2>
+        <p>Instruções passo a passo para confiar na Autoridade Certificadora Local (CA).</p>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Baixar o Certificado Raiz CA</h4>
+          <p>Faça o download do arquivo <code>rootCA.pem</code> gerado especificamente para a rede do Sprintt.</p>
+          <div style="margin-top: 0.75rem;">
+            <a href="rootCA.pem" download="rootCA.pem" class="btn btn-emerald">📥 Download rootCA.pem</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Instalação no Google Chrome / Chromium / Linux</h4>
+          <p>
+            Abra <code>chrome://settings/certificates</code> &rarr; aba <strong>Autoridades</strong> &rarr; clique em <strong>Importar</strong> &rarr; selecione o <code>rootCA.pem</code> baixado &rarr; marque a caixa <em>"Confiar neste certificado para identificar sites"</em> &rarr; Concluir.
+          </p>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Instalação no Mozilla Firefox</h4>
+          <p>
+            Abra <code>about:preferences#privacy</code> &rarr; role até <strong>Certificados</strong> &rarr; <strong>Ver Certificados</strong> &rarr; aba <strong>Autoridades</strong> &rarr; <strong>Importar</strong> &rarr; selecione <code>rootCA.pem</code> &rarr; marque <em>"Confiar nesta autoridade para identificar sites"</em>.
+          </p>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Instalação no Windows / macOS</h4>
+          <p>
+            <strong>Windows:</strong> Clique duas vezes no <code>rootCA.pem</code> (ou renomeie para <code>.crt</code>) &rarr; "Instalar Certificado" &rarr; Máquina Local &rarr; Selecionar "Autoridades de Certificação Raiz Confiáveis".<br>
+            <strong>macOS:</strong> Dê duplo-clique no certificado para abri-lo no "Acesso às Chaves" (Keychain Access) &rarr; adicione ao chaveiro "Sistema" &rarr; selecione "Obter Informações" e marque "Confiar Sempre".
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sprints & Kanban -->
+    <section class="section" id="sprints">
+      <div class="section-header">
+        <h2>🎯 Isolamento da Sprint Ativa</h2>
+        <p>Garantia de coerência ágil entre o Backlog e a Sprint em Andamento.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="color: var(--brand-emerald);">✓ Comportamento Corrigido</h3>
+        <p style="margin-bottom: 1rem;">
+          Anteriormente, projetos sem sprint ativa carregavam a totalidade dos tickets do projeto no quadro.
+          Com a refatoração no <code>JiraWebController.kt</code> e no template <code>jira_board.html</code>:
+        </p>
+        <ul style="padding-left: 1.5rem; color: var(--text-muted); line-height: 1.8;">
+          <li>Se <strong>não houver sprint ativa</strong>: o quadro renderiza um aviso elegante indicando que nenhuma sprint está em execução, com botão de atalho para planejar e iniciar uma sprint no Backlog.</li>
+          <li>Se <strong>houver sprint ativa</strong>: apenas tickets pertencentes a <code>sprint.id == activeSprint.id</code> são listados nas colunas TO DO, IN PROGRESS e DONE.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Tabela da API REST -->
+    <section class="section" id="api">
+      <div class="section-header">
+        <h2>📡 Especificação da API REST</h2>
+        <p>Principais endpoints disponíveis no NanoSpring Server (porta 8443 TLS).</p>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Método</th>
+              <th>Endpoint</th>
+              <th>Descrição</th>
+              <th>Resposta Exemplo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
+              <td><code>/api/v1/server/battery</code></td>
+              <td>Retorna o estado da bateria do celular servidor</td>
+              <td><code>{"level":85, "isCharging":true, "plugType":"AC"}</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
+              <td><code>/api/v1/projects</code></td>
+              <td>Lista todos os projetos cadastrados</td>
+              <td><code>[{"id":"uuid", "name":"Sprintt", "key":"SPR"}]</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
+              <td><code>/api/v1/sprints?projectId={id}</code></td>
+              <td>Lista as sprints associadas a um projeto</td>
+              <td><code>[{"id":"sprint-1", "status":"ACTIVE"}]</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
+              <td><code>/api/v1/issues?sprintId={id}</code></td>
+              <td>Filtra os tickets estritamente pela sprint ativa</td>
+              <td><code>[{"id":"issue-10", "title":"Fix Bug"}]</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">POST</span></td>
+              <td><code>/api/v1/issues</code></td>
+              <td>Cria uma nova issue no projeto/sprint</td>
+              <td><code>{"id":"new-uuid", "status":"TODO"}</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
+              <td><code>/cert/rootCA.pem</code></td>
+              <td>Download direto do certificado raiz da autoridade</td>
+              <td>Arquivo binário/texto PEM</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Deploy no GitHub Pages -->
+    <section class="section" id="deploy">
+      <div class="section-header">
+        <h2>🚀 Como Fazer o Deploy no GitHub Pages</h2>
+        <p>Instruções simples para publicar esta documentação com link público.</p>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Enviar a pasta docs para o GitHub</h4>
+          <p>Faça o commit e push das alterações para o repositório remoto:</p>
+          <div class="code-box">git add docs/
+git commit -m "docs: adiciona documentação do Sprintt para GitHub Pages"
+git push origin main</div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Ativar o GitHub Pages no Repositório</h4>
+          <p>
+            1. Acesse o seu repositório no GitHub &rarr; aba <strong>Settings</strong>.<br>
+            2. No menu lateral esquerdo, clique em <strong>Pages</strong>.<br>
+            3. Em <strong>Build and deployment &gt; Source</strong>, selecione <em>"Deploy from a branch"</em>.<br>
+            4. Em <strong>Branch</strong>, selecione <code>main</code> e a pasta <code>/docs</code>.<br>
+            5. Clique em <strong>Save</strong>. Em poucos minutos o site estará disponível publicamente!
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div class="container" style="padding: 1rem 1.5rem;">
+      <p>Sprintt (TicketMaster) Engine &bull; Documentação Técnica &bull; Hospedado com GitHub Pages</p>
+    </div>
+  </footer>
+
+</body>
+</html>

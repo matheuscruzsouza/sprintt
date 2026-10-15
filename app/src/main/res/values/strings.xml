@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">sprintt</string>
+    <string name="title_board">Quadro Kanban</string>
+    <string name="title_backlog">Backlog</string>
+    <string name="title_create_issue">Novo Ticket</string>
+    <string name="action_create">Criar</string>
+    <string name="action_save">Salvar</string>
+    <string name="hint_issue_title">O que precisa ser feito?</string>
+    <string name="hint_issue_description">Descrição detalhada...</string>
+    <string name="status_todo">A Fazer</string>
+    <string name="status_in_progress">Em Progresso</string>
+    <string name="status_done">Concluído</string>
+</resources>

@@ -1,0 +1,54 @@
+[
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/fragment_user_list.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_user_list.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/item_user_card.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/item_user_card.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/fragment_issue_list.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_issue_list.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/fragment_dashboard.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_dashboard.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/item_project_card.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/item_project_card.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/activity_main.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/activity_main.xml"
+    },
+    {
+        "merged": "io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/fragment_analytics.xml",
+        "source": "io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_analytics.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/dialog_create_user.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/dialog_create_user.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/activity_issue_detail.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/activity_issue_detail.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/item_issue_card.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/item_issue_card.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/fragment_project_list.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_project_list.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/dialog_create_issue.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/dialog_create_issue.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/dialog_create_project.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/dialog_create_project.xml"
+    }
+]

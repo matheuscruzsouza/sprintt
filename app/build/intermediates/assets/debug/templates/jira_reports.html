@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sprintt &bull; Relatórios &amp; Gestão</title>
+    <link rel="stylesheet" href="/static/css/jira.css">
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+    <script src="/static/js/htmx.min.js"></script>
+    <script>
+        // Carrega o tema imediatamente para evitar flash de tela branca
+        (function() {
+            var savedTheme = localStorage.getItem('sprintt_theme') || localStorage.getItem('ticketmaster_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+
+    <!-- Sidebar Estilo Linear / Aligno -->
+    <aside class="app-sidebar">
+        <div class="brand-section">
+            <div class="brand-icon" style="background: linear-gradient(135deg, #6366F1, #06B6D4); border-radius: 8px; box-shadow: 0 2px 10px rgba(99,102,241,0.35);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="13 17 18 12 13 7"></polyline>
+                    <polyline points="6 17 11 12 6 7"></polyline>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title" style="letter-spacing: -0.5px; font-weight: 800;">
+                    <span>sprintt</span>
+                </div>
+                <span class="brand-badge" style="background: rgba(6,182,212,0.12); color: #06B6D4; font-weight: 700;">nano-spring 2.1.0</span>
+            </div>
+        </div>
+
+        <div class="nav-section-title">Navegação</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/projetos">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Projetos
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/projetos/{{currentProjectKey}}/sprint">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    Sprint Ativa
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/projetos/{{currentProjectKey}}/backlog">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    Backlog & Sprints
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="/projetos/{{currentProjectKey}}/relatorios">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    Relatórios & Gestão
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/swagger-ui" target="_blank">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Swagger OpenAPI
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+                <span id="themeToggleLabel">🌙 Modo Escuro</span>
+                <span id="themeToggleIcon">☀️</span>
+            </button>
+            <div class="server-pill" onclick="openSslModal()" style="cursor: pointer;" title="Configuração SSL e mDNS">
+                <span class="pulse-dot"></span>
+                <span>sprintt.local:8443</span>
+            </div>
+            <!-- Bateria do Servidor na Sidebar -->
+            <div class="server-battery-pill {{#serverBatteryCharging}}battery-charging{{/serverBatteryCharging}} {{#serverBatteryLow}}battery-low{{/serverBatteryLow}}"
+                 onclick="showBatteryToast(true)"
+                 style="cursor: pointer;"
+                 title="Clique para ver detalhes da bateria">
+                <span class="server-battery-icon">{{serverBatteryIcon}}</span>
+                <span class="server-battery-level-text">{{serverBatteryLevel}}%</span>
+                <span style="font-size: 0.7rem; opacity: 0.85;">{{serverBatteryStatus}}</span>
+            </div>
+            <a href="javascript:void(0)" onclick="openSslModal()" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: none; text-align: center; margin-top: 4px;">
+                🔒 Certificado SSL (Como Instalar)
+            </a>
+        </div>
+    </aside>
+
+    <!-- Área Principal Padronizada com app-main e top-bar -->
+    <main class="app-main">
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <div class="breadcrumb-path">
+                    <a href="/projetos" style="color: var(--text-secondary); text-decoration: none;">Projetos</a>
+                    <span>/</span>
+                    <strong id="breadcrumbProject">{{currentProjectName}}</strong>
+                    <span>/</span>
+                    <span style="color: var(--text-muted);">Relatórios &amp; Gestão</span>
+                </div>
+
+                <!-- Seletor Rápido de Projetos -->
+                <select id="projectSelect"
+                        style="padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); cursor: pointer;"
+                        name="projectKey"
+                        onchange="window.location.href='/projetos/' + this.value + '/relatorios'">
+                    {{#projects}}
+                    <option value="{{key}}" {{#isSelected}}selected{{/isSelected}}>{{name}} ({{key}})</option>
+                    {{/projects}}
+                </select>
+            </div>
+
+            <div class="top-bar-actions">
+                <!-- Indicador de Bateria do Servidor -->
+                <div class="server-battery-pill {{#serverBatteryCharging}}battery-charging{{/serverBatteryCharging}} {{#serverBatteryLow}}battery-low{{/serverBatteryLow}}"
+                     onclick="showBatteryToast(true)"
+                     style="cursor: pointer;"
+                     title="Servidor Android: {{serverBatteryFormatted}} (clique para detalhes)">
+                    <span class="server-battery-icon">{{serverBatteryIcon}}</span>
+                    <span>Bateria Servidor: <strong class="server-battery-level-text">{{serverBatteryLevel}}%</strong></span>
+                </div>
+
+                <button type="button" class="btn-outline" onclick="openSslModal()" style="font-size: 0.8rem; padding: 6px 12px;">
+                    🔒 SSL &amp; mDNS
+                </button>
+
+                <div class="sprint-filter-wrapper">
+                    <label for="sprintSelector" style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Sprint:</label>
+                    <select id="sprintSelector" class="sprint-select-dropdown" onchange="window.location.href='/projetos/{{currentProjectKey}}/relatorios?sprintId=' + this.value">
+                        {{#sprintOptions}}
+                        <option value="{{id}}" {{#isSelected}}selected{{/isSelected}}>
+                            {{name}} ({{status}})
+                        </option>
+                        {{/sprintOptions}}
+                    </select>
+                </div>
+                <a href="/projetos/{{currentProjectKey}}/sprint" class="btn-primary" style="font-size: 0.8rem; padding: 6px 12px;">Ir ao Quadro ➔</a>
+            </div>
+        </header>
+
+        <section class="content-body" style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="page-header" style="margin-bottom: 0;">
+                <div>
+                    <h1 class="page-title">{{currentProjectName}} &bull; Relatórios &amp; Métricas Ágeis</h1>
+                    <p class="page-subtitle">Acompanhamento de velocidade, burndown chart, composição de escopo e desempenho da equipe</p>
+                </div>
+                <div>
+                    <a href="/projetos" class="btn-outline" style="font-size: 0.8rem;">Ver Todos os Projetos ➔</a>
+                </div>
+            </div>
+
+            <!-- Linha de KPIs Resumo -->
+            <section class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Story Points Totais</span>
+                        <div class="kpi-icon-wrap icon-purple">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value">{{totalPoints}} <span class="kpi-unit">pts</span></div>
+                    <div class="kpi-subtext">{{totalIssuesCount}} tarefas cadastradas</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Pontos Entregues</span>
+                        <div class="kpi-icon-wrap icon-green">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value text-green">{{donePoints}} <span class="kpi-unit">pts</span></div>
+                    <div class="kpi-subtext">{{doneCount}} tarefas finalizadas</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Em Andamento</span>
+                        <div class="kpi-icon-wrap icon-amber">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value text-amber">{{inProgressPoints}} <span class="kpi-unit">pts</span></div>
+                    <div class="kpi-subtext">{{inProgressCount}} tarefas em execução</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Taxa de Conclusão</span>
+                        <div class="kpi-icon-wrap icon-indigo">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                    </div>
+                    <div class="kpi-value text-indigo">{{completionRate}}%</div>
+                    <div class="kpi-progress-bar">
+                        <div class="kpi-progress-fill" style="width: {{completionRate}}%;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Painel Principal de Gráficos -->
+            <div class="reports-main-grid">
+
+                <!-- Sprint Burndown Chart (SVG Nativo Leve) -->
+                <section class="report-panel burndown-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Sprint Burndown Chart</h2>
+                            <p class="panel-subtitle">{{sprintName}} &bull; Linha Ideal vs Queima Real de Pontos</p>
+                        </div>
+                        <div class="burndown-legend">
+                            <div class="legend-item">
+                                <span class="legend-line line-ideal"></span>
+                                <span>Ideal (Projetado)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-line line-actual"></span>
+                                <span>Real (Executado)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="burndown-svg-container">
+                        <svg viewBox="0 0 700 280" class="burndown-chart-svg" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.35"/>
+                                    <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.0"/>
+                                </linearGradient>
+                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#06B6D4" flood-opacity="0.5"/>
+                                </filter>
+                            </defs>
+
+                            <!-- Linhas de Grade Horizontais (Eixo Y) -->
+                            <line x1="50" y1="20" x2="680" y2="20" class="chart-grid-line" />
+                            <line x1="50" y1="75" x2="680" y2="75" class="chart-grid-line" />
+                            <line x1="50" y1="130" x2="680" y2="130" class="chart-grid-line" />
+                            <line x1="50" y1="185" x2="680" y2="185" class="chart-grid-line" />
+                            <line x1="50" y1="240" x2="680" y2="240" class="chart-grid-line" />
+
+                            <!-- Labels Eixo Y (Story Points) -->
+                            <text x="42" y="24" class="chart-label" text-anchor="end">{{totalPoints}} pts</text>
+                            <text x="42" y="134" class="chart-label" text-anchor="end">{{midPointsVal}} pts</text>
+                            <text x="42" y="244" class="chart-label" text-anchor="end">0 pts</text>
+
+                            <!-- Labels Eixo X (Dias do Ciclo) -->
+                            {{#burndownDays}}
+                            <text x="{{x}}" y="262" class="chart-label" text-anchor="middle">{{dayLabel}}</text>
+                            <line x1="{{x}}" y1="20" x2="{{x}}" y2="240" class="chart-grid-line-vertical" />
+                            {{/burndownDays}}
+
+                            <!-- Área Preenchida com Gradiente da Linha Real -->
+                            {{#actualAreaPoints}}
+                            <polygon points="{{actualAreaPoints}}" fill="url(#actualGradient)" />
+                            {{/actualAreaPoints}}
+
+                            <!-- Linha Ideal (Tracejada Cinza) -->
+                            <polyline points="{{idealLinePoints}}" class="chart-line-ideal" />
+
+                            <!-- Linha Real (Sólida Ciano Neon com Glow) -->
+                            <polyline points="{{actualLinePoints}}" class="chart-line-actual" filter="url(#glow)" />
+
+                            <!-- Marcadores Circulares nos Dias Medidos -->
+                            {{#actualPointsList}}
+                            <circle cx="{{cx}}" cy="{{cy}}" r="4.5" class="chart-point-dot" />
+                            <circle cx="{{cx}}" cy="{{cy}}" r="2" fill="#FFFFFF" />
+                            {{/actualPointsList}}
+                        </svg>
+                    </div>
+
+                    <div class="panel-footer-note">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span>O gráfico reflete a queima de pontos da sprint ativa ao longo dos 10 dias de ciclo padrão.</span>
+                    </div>
+                </section>
+
+                <!-- Distribuição por Tipo de Tarefa -->
+                <section class="report-panel type-dist-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2 class="panel-title">Distribuição de Demanda</h2>
+                            <p class="panel-subtitle">Composição por tipos de tarefas e complexidade</p>
+                        </div>
+                    </div>
+
+                    <div class="type-distribution-list">
+                        {{#typeDistribution}}
+                        <div class="type-dist-item">
+                            <div class="type-dist-info">
+                                <div class="type-tag-wrap">
+                                    <span class="issue-type-badge type-{{typeCode}}">{{typeName}}</span>
+                                </div>
+                                <span class="type-stats">{{count}} tarefas &bull; <strong>{{points}} pts</strong> ({{percent}}%)</span>
+                            </div>
+                            <div class="type-bar-bg">
+                                <div class="type-bar-fill bar-{{typeCode}}" style="width: {{percent}}%;"></div>
+                            </div>
+                        </div>
+                        {{/typeDistribution}}
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Carga de Trabalho e Desempenho por Membro -->
+            <section class="report-panel members-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Carga de Trabalho & Desempenho por Membro</h2>
+                        <p class="panel-subtitle">Alocação de tarefas, story points atribuídos e taxa de entrega</p>
+                    </div>
+                </div>
+
+                <div class="members-grid">
+                    {{#memberWorkload}}
+                    <div class="member-card">
+                        <div class="member-header">
+                            <div class="member-avatar" style="background-color: {{avatarColor}};">
+                                {{initial}}
+                            </div>
+                            <div class="member-names">
+                                <div class="member-name">{{name}}</div>
+                                <div class="member-role">{{role}}</div>
+                            </div>
+                        </div>
+
+                        <div class="member-metrics">
+                            <div class="metric-block">
+                                <span class="metric-label">Tarefas</span>
+                                <span class="metric-val">{{doneCount}} / {{ticketCount}}</span>
+                            </div>
+                            <div class="metric-block">
+                                <span class="metric-label">Pontos</span>
+                                <span class="metric-val">{{donePoints}} / {{totalPoints}} pts</span>
+                            </div>
+                            <div class="metric-block">
+                                <span class="metric-label">Taxa</span>
+                                <span class="metric-val text-green">{{completionRate}}%</span>
+                            </div>
+                        </div>
+
+                        <div class="member-progress-bg">
+                            <div class="member-progress-fill" style="width: {{completionRate}}%;"></div>
+                        </div>
+                    </div>
+                    {{/memberWorkload}}
+                </div>
+            </section>
+
+        </section>
+    </main>
+
+    <script>
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme') || 'light';
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('sprintt_theme', next);
+            updateThemeButtonText(next);
+        }
+
+        function updateThemeButtonText(theme) {
+            var label = document.getElementById('themeToggleLabel');
+            var icon = document.getElementById('themeToggleIcon');
+            if (label && icon) {
+                if (theme === 'dark') {
+                    label.textContent = '☀️ Modo Claro';
+                    icon.textContent = '🌙';
+                } else {
+                    label.textContent = '🌙 Modo Escuro';
+                    icon.textContent = '☀️';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var savedTheme = localStorage.getItem('sprintt_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            updateThemeButtonText(savedTheme);
+            showBatteryToast(false);
+            setInterval(function() {
+                fetch('/api/v1/server/battery')
+                    .then(function(r) { return r.json(); })
+                    .then(updateBatteryElements)
+                    .catch(function() {});
+            }, 30000);
+        });
+
+        // Funções de Telemetria de Bateria do Servidor
+        function dismissBatteryToast() {
+            var toast = document.getElementById('serverBatteryToast');
+            if (toast) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(15px)';
+                setTimeout(function() { toast.style.display = 'none'; }, 300);
+            }
+        }
+
+        function showBatteryToast(force) {
+            fetch('/api/v1/server/battery')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    updateBatteryElements(data);
+                    var toast = document.getElementById('serverBatteryToast');
+                    if (toast) {
+                        toast.style.display = 'flex';
+                        setTimeout(function() {
+                            toast.style.opacity = '1';
+                            toast.style.transform = 'translateY(0)';
+                        }, 10);
+                        if (!data.isLow && !force) {
+                            setTimeout(dismissBatteryToast, 6500);
+                        }
+                    }
+                }).catch(function() {});
+        }
+
+        function updateBatteryElements(data) {
+            var pills = document.querySelectorAll('.server-battery-pill');
+            pills.forEach(function(pill) {
+                if (data.isCharging) {
+                    pill.classList.add('battery-charging');
+                    pill.classList.remove('battery-low');
+                } else if (data.isLow) {
+                    pill.classList.add('battery-low');
+                    pill.classList.remove('battery-charging');
+                } else {
+                    pill.classList.remove('battery-charging', 'battery-low');
+                }
+            });
+            var levels = document.querySelectorAll('.server-battery-level-text');
+            levels.forEach(function(el) { el.innerText = data.level + '%'; });
+            var icons = document.querySelectorAll('.server-battery-icon');
+            icons.forEach(function(el) { el.innerText = data.icon; });
+            var desc = document.getElementById('serverBatteryToastDesc');
+            if (desc) {
+                desc.innerHTML = 'Bateria em <strong>' + data.level + '%</strong> &bull; ' + data.statusText;
+            }
+            var toastIcon = document.getElementById('serverBatteryToastIcon');
+            if (toastIcon) toastIcon.innerText = data.icon;
+        }
+
+        // Modal de Ajuda SSL / Certificado
+        function openSslModal(e) {
+            if (e) e.preventDefault();
+            var modal = document.getElementById('sslModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeSslModal(e) {
+            if (e && e.target && e.target.id !== 'sslModal') return;
+            var modal = document.getElementById('sslModal');
+            if (modal) modal.style.display = 'none';
+        }
+    </script>
+
+    <!-- Container de Notificação Flutuante da Bateria do Servidor -->
+    <div class="server-toast-container" id="serverToastContainer">
+        <div class="server-battery-toast {{#serverBatteryLow}}toast-low{{/serverBatteryLow}} {{#serverBatteryCharging}}toast-charging{{/serverBatteryCharging}}" id="serverBatteryToast" style="display: none;">
+            <div class="toast-icon-wrap" id="serverBatteryToastIcon">{{serverBatteryIcon}}</div>
+            <div class="toast-content">
+                <div class="toast-title">Servidor Android (sprintt)</div>
+                <div class="toast-subtitle" id="serverBatteryToastDesc">Bateria em <strong>{{serverBatteryLevel}}%</strong> &bull; {{serverBatteryStatus}}</div>
+            </div>
+            <button type="button" class="toast-close-btn" onclick="dismissBatteryToast()">&times;</button>
+        </div>
+    </div>
+
+    <!-- Modal de Instalação do Certificado SSL / Resolução de Não Seguro -->
+    <div class="modal-backdrop" id="sslModal" style="display: none;" onclick="closeSslModal(event)">
+        <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <span>🔒</span> Certificado SSL e Resolução de "Não Seguro"
+                </h3>
+                <button type="button" class="modal-close-btn" onclick="closeSslModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="font-size: 0.88rem; line-height: 1.55; color: var(--text-secondary);">
+                <p style="margin-bottom: 12px;">
+                    O <strong>sprintt</strong> opera com TLS/HTTPS seguro sob o domínio <code>https://sprintt.local:8443</code>. Para que seu navegador exiba o cadeado verde e elimine o aviso de "Não Seguro", instale a Autoridade Certificadora local (CA).
+                </p>
+
+                <div style="background: var(--bg-column); border-radius: 8px; padding: 14px; margin-bottom: 16px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <strong style="color: var(--text-primary); font-size: 0.9rem;">Certificado Raiz (rootCA.pem)</strong>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">Válido até 2036 &bull; mkcert CA</div>
+                    </div>
+                    <a href="/rootCA.pem" download="rootCA.pem" class="btn-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+                        ⬇ Baixar rootCA.pem
+                    </a>
+                </div>
+
+                <h4 style="color: var(--text-primary); font-size: 0.9rem; margin-bottom: 6px;">Como confiar o certificado no seu sistema:</h4>
+                <ul style="padding-left: 20px; margin-bottom: 12px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>Linux / Ubuntu:</strong> Baixe o arquivo e rode: <code>sudo cp rootCA.pem /usr/local/share/ca-certificates/sprintt-ca.crt &amp;&amp; sudo update-ca-certificates</code></li>
+                    <li><strong>Windows:</strong> Abra o <code>rootCA.pem</code> &gt; "Instalar Certificado" &gt; "Computador Local" &gt; pasta "Autoridades de Certificação Raiz Confiáveis".</li>
+                    <li><strong>macOS:</strong> Abra no "Acesso às Chaves" (Keychain Access) &gt; Sistema &gt; clique duas vezes e marque "Sempre Confiar".</li>
+                    <li><strong>Navegadores (Chrome/Edge/Firefox):</strong> Configurações &gt; Privacidade e Segurança &gt; Gerenciar Certificados &gt; Importar em "Autoridades".</li>
+                    <li><strong>Android:</strong> Configurações &gt; Segurança &gt; Instalar do Armazenamento &gt; "Certificado CA".</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeSslModal()">Fechar</button>
+                <a href="/rootCA.pem" download="rootCA.pem" class="btn-primary">Baixar Certificado</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

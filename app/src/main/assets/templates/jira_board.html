@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sprintt &bull; Quadro Kanban</title>
+    <link rel="stylesheet" href="/static/css/jira.css">
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+    <script src="/static/js/htmx.min.js"></script>
+    <script>
+        // Carrega o tema imediatamente para evitar flash de tela
+        (function() {
+            var savedTheme = localStorage.getItem('sprintt_theme') || localStorage.getItem('ticketmaster_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+
+    <!-- Sidebar Estilo Linear / Aligno -->
+    <aside class="app-sidebar">
+        <div class="brand-section">
+            <div class="brand-icon" style="background: linear-gradient(135deg, #6366F1, #06B6D4); border-radius: 8px; box-shadow: 0 2px 10px rgba(99,102,241,0.35);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="13 17 18 12 13 7"></polyline>
+                    <polyline points="6 17 11 12 6 7"></polyline>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title" style="letter-spacing: -0.5px; font-weight: 800;">
+                    <span>sprintt</span>
+                </div>
+                <span class="brand-badge" style="background: rgba(6,182,212,0.12); color: #06B6D4; font-weight: 700;">nano-spring 2.1.0</span>
+            </div>
+        </div>
+
+        <div class="nav-section-title">Navegação</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/projetos">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Projetos
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a href="/projetos/{{currentProjectKey}}/sprint">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    Sprint Ativa
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/projetos/{{currentProjectKey}}/backlog">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    Backlog & Sprints
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/projetos/{{currentProjectKey}}/relatorios">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                    Relatórios & Gestão
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/swagger-ui" target="_blank">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Swagger OpenAPI
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+                <span id="themeToggleLabel">🌙 Modo Escuro</span>
+                <span id="themeToggleIcon">☀️</span>
+            </button>
+            <div class="server-pill" onclick="openSslModal()" style="cursor: pointer;" title="Configuração SSL e mDNS">
+                <span class="pulse-dot"></span>
+                <span>sprintt.local:8443</span>
+            </div>
+            <!-- Bateria do Servidor na Sidebar -->
+            <div class="server-battery-pill {{#serverBatteryCharging}}battery-charging{{/serverBatteryCharging}} {{#serverBatteryLow}}battery-low{{/serverBatteryLow}}"
+                 onclick="showBatteryToast(true)"
+                 style="cursor: pointer;"
+                 title="Clique para ver detalhes da bateria">
+                <span class="server-battery-icon">{{serverBatteryIcon}}</span>
+                <span class="server-battery-level-text">{{serverBatteryLevel}}%</span>
+                <span style="font-size: 0.7rem; opacity: 0.85;">{{serverBatteryStatus}}</span>
+            </div>
+            <a href="javascript:void(0)" onclick="openSslModal()" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: none; text-align: center; margin-top: 4px;">
+                🔒 Certificado SSL (Como Instalar)
+            </a>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="app-main">
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <div class="breadcrumb-path">
+                    <a href="/projetos" style="color: var(--text-secondary); text-decoration: none;">Projetos</a>
+                    <span>/</span>
+                    <strong id="breadcrumbProject">{{currentProjectName}}</strong>
+                    <span>/</span>
+                    <span style="color: var(--text-muted);">Sprint Ativa</span>
+                </div>
+
+                <!-- Seletor Rápido de Projetos -->
+                <select id="projectSelect"
+                        style="padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); cursor: pointer;"
+                        name="projectKey"
+                        onchange="window.location.href='/projetos/' + this.value + '/sprint'">
+                    {{#projects}}
+                    <option value="{{key}}" {{#isSelected}}selected{{/isSelected}}>{{name}} ({{key}})</option>
+                    {{/projects}}
+                </select>
+            </div>
+
+            <div class="top-bar-actions">
+                <!-- Indicador de Bateria do Servidor no Top Bar -->
+                <div class="server-battery-pill {{#serverBatteryCharging}}battery-charging{{/serverBatteryCharging}} {{#serverBatteryLow}}battery-low{{/serverBatteryLow}}"
+                     onclick="showBatteryToast(true)"
+                     style="cursor: pointer;"
+                     title="Servidor Android: {{serverBatteryFormatted}} (clique para detalhes)">
+                    <span class="server-battery-icon">{{serverBatteryIcon}}</span>
+                    <span>Bateria Servidor: <strong class="server-battery-level-text">{{serverBatteryLevel}}%</strong></span>
+                </div>
+
+                <button type="button" class="btn-outline" onclick="openSslModal()" style="font-size: 0.8rem; padding: 6px 12px;">
+                    🔒 SSL &amp; mDNS
+                </button>
+
+                <button type="button" class="btn-primary" onclick="openCreateModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Criar Ticket
+                </button>
+                <a href="/swagger-ui" target="_blank" class="btn-outline">OpenAPI Docs</a>
+            </div>
+        </header>
+
+        <section class="content-body">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" id="pageTitleHeading">{{currentProjectName}} ({{currentProjectKey}})</h1>
+                    {{#hasActiveSprint}}
+                    <p class="page-subtitle">Sprint Ativa: <strong>{{activeSprintName}}</strong> &bull; Meta: {{activeSprintGoal}}</p>
+                    {{/hasActiveSprint}}
+                    {{^hasActiveSprint}}
+                    <p class="page-subtitle" style="color: var(--text-muted);">Nenhuma sprint ativa em execução para este projeto</p>
+                    {{/hasActiveSprint}}
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <a href="/projetos/{{currentProjectKey}}/backlog" class="btn-primary" style="font-size: 0.8rem;">Gerenciar Backlog / Sprints ➔</a>
+                    <a href="/projetos" class="btn-outline" style="font-size: 0.8rem;">Ver Todos os Projetos</a>
+                </div>
+            </div>
+
+            <!-- Container do Quadro Kanban (Atualizado via HTMX) -->
+            <div id="kanban-container">
+                {{#hasActiveSprint}}
+                <div class="kanban-grid">
+                    
+                    <!-- Coluna A Fazer -->
+                    <div class="kanban-col" data-status="TODO" 
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)" 
+                         ondrop="handleDrop(event, 'TODO')">
+                        <div class="col-header">
+                            <div class="col-title-wrap">
+                                <span class="col-status-dot dot-todo"></span>
+                                <span class="col-title">A Fazer</span>
+                            </div>
+                            <span class="col-counter">{{todoCount}}</span>
+                        </div>
+                        {{#todoIssues}}
+                        <div class="issue-card type-{{type}}" 
+                             draggable="true" 
+                             data-key="{{key}}"
+                             ondragstart="handleDragStart(event, '{{key}}')"
+                             ondragend="handleDragEnd(event)">
+                            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                                <span class="issue-key">{{key}}</span>
+                                <span class="issue-type-badge">{{type}}</span>
+                            </div>
+                            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
+                            <div class="card-bottom">
+                                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                                    <span>@{{assignee}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {{/todoIssues}}
+                    </div>
+
+                    <!-- Coluna Em Progresso -->
+                    <div class="kanban-col" data-status="IN_PROGRESS" 
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)" 
+                         ondrop="handleDrop(event, 'IN_PROGRESS')">
+                        <div class="col-header">
+                            <div class="col-title-wrap">
+                                <span class="col-status-dot dot-inprogress"></span>
+                                <span class="col-title">Em Progresso</span>
+                            </div>
+                            <span class="col-counter">{{inProgressCount}}</span>
+                        </div>
+                        {{#inProgressIssues}}
+                        <div class="issue-card type-{{type}}" 
+                             draggable="true" 
+                             data-key="{{key}}"
+                             ondragstart="handleDragStart(event, '{{key}}')"
+                             ondragend="handleDragEnd(event)">
+                            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                                <span class="issue-key">{{key}}</span>
+                                <span class="issue-type-badge">{{type}}</span>
+                            </div>
+                            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
+                            <div class="card-bottom">
+                                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                                    <span>@{{assignee}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {{/inProgressIssues}}
+                    </div>
+
+                    <!-- Coluna Concluído -->
+                    <div class="kanban-col" data-status="DONE" 
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)" 
+                         ondrop="handleDrop(event, 'DONE')">
+                        <div class="col-header">
+                            <div class="col-title-wrap">
+                                <span class="col-status-dot dot-done"></span>
+                                <span class="col-title">Concluído</span>
+                            </div>
+                            <span class="col-counter">{{doneCount}}</span>
+                        </div>
+                        {{#doneIssues}}
+                        <div class="issue-card type-{{type}}" 
+                             draggable="true" 
+                             data-key="{{key}}"
+                             ondragstart="handleDragStart(event, '{{key}}')"
+                             ondragend="handleDragEnd(event)">
+                            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                                <span class="issue-key">{{key}}</span>
+                                <span class="issue-type-badge">{{type}}</span>
+                            </div>
+                            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
+                            <div class="card-bottom">
+                                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                                    <span>@{{assignee}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {{/doneIssues}}
+                    </div>
+
+                </div>
+                {{/hasActiveSprint}}
+
+                {{^hasActiveSprint}}
+                <div style="background: var(--bg-surface); border: 2px dashed var(--border-subtle); border-radius: 12px; padding: 48px 24px; text-align: center; margin-top: 10px;">
+                    <div style="font-size: 2.4rem; margin-bottom: 12px;">🏃‍♂️</div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Nenhuma Sprint Ativa em Execução</h3>
+                    <p style="color: var(--text-secondary); max-width: 520px; margin: 0 auto 22px auto; font-size: 0.88rem; line-height: 1.5;">
+                        Este projeto não possui uma Sprint em andamento no momento. Os tickets permanecem organizados no <strong>Product Backlog</strong> e em <strong>Sprints Futuras</strong>. Inicie uma Sprint para começar a movimentar tarefas no Kanban.
+                    </p>
+                    <a href="/projetos/{{currentProjectKey}}/backlog" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600;">
+                        <span>Ir para o Backlog &amp; Iniciar Sprint</span> ➔
+                    </a>
+                </div>
+                {{/hasActiveSprint}}
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Criação de Ticket -->
+    <div class="modal-backdrop" id="createIssueModal" style="display: none;" onclick="closeCreateModal(event)">
+        <div class="modal-dialog" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">Criar Novo Ticket</h3>
+                <button type="button" class="modal-close-btn" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <form hx-post="/api/v1/issues?view=board" 
+                  hx-target="#kanban-container" 
+                  hx-swap="innerHTML"
+                  hx-on::after-request="handleAfterCreateTicket(event)">
+                <input type="hidden" name="view" value="board">
+                <input type="hidden" name="projectKey" id="hiddenProjectKey" value="{{currentProjectKey}}">
+                {{#hasActiveSprint}}
+                <input type="hidden" name="sprintId" value="{{activeSprintId}}">
+                {{/hasActiveSprint}}
+
+                <div class="modal-body">
+                    <div class="detail-section">
+                        <label class="detail-label">Título *</label>
+                        <input type="text" name="title" class="input-text" style="width: 100%;" placeholder="O que precisa ser feito?" required>
+                    </div>
+
+                    <div class="detail-section">
+                        <label class="detail-label">Descrição</label>
+                        <textarea name="description" class="input-text" style="width: 100%; min-height: 80px;" placeholder="Detalhes, contexto ou critérios de aceite..."></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" class="detail-section">
+                        <div>
+                            <label class="detail-label">Tipo</label>
+                            <select name="type" class="select-field" style="width: 100%;">
+                                <option value="STORY">Story</option>
+                                <option value="TASK" selected>Task</option>
+                                <option value="BUG">Bug</option>
+                                <option value="EPIC">Epic</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="detail-label">Prioridade</label>
+                            <select name="priority" class="select-field" style="width: 100%;">
+                                <option value="HIGHEST">Máxima</option>
+                                <option value="HIGH">Alta</option>
+                                <option value="MEDIUM" selected>Média</option>
+                                <option value="LOW">Baixa</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+                        <div>
+                            <label class="detail-label">Responsável</label>
+                            <select name="assignee" class="select-field" style="width: 100%;">
+                                {{#users}}
+                                <option value="{{fullName}}">👤 {{fullName}} ({{role}})</option>
+                                {{/users}}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="detail-label">Story Points</label>
+                            <input type="number" name="storyPoints" class="input-number" style="width: 100%;" value="3" min="1" max="21">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeCreateModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Criar Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Container Dinâmico para o Modal de Detalhes -->
+    <div id="modal-container"></div>
+
+    <script>
+        var draggedIssueKey = null;
+
+        function updateThemeControls(theme) {
+            var label = document.getElementById('themeToggleLabel');
+            var icon = document.getElementById('themeToggleIcon');
+            if (theme === 'dark') {
+                if (label) label.innerText = '☀️ Modo Claro';
+                if (icon) icon.innerText = '🌙';
+            } else {
+                if (label) label.innerText = '🌙 Modo Escuro';
+                if (icon) icon.innerText = '☀️';
+            }
+        }
+
+        function toggleTheme() {
+            var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('ticketmaster_theme', newTheme);
+            updateThemeControls(newTheme);
+        }
+
+        // Sincroniza controles de tema
+        var current = document.documentElement.getAttribute('data-theme') || 'light';
+        updateThemeControls(current);
+
+        function updateActiveProject(selectElem) {
+            document.getElementById('hiddenProjectKey').value = selectElem.value;
+            var text = selectElem.options[selectElem.selectedIndex].text;
+            document.getElementById('pageTitleHeading').innerText = text;
+            document.getElementById('breadcrumbProject').innerText = text;
+        }
+
+        function openCreateModal() {
+            var modal = document.getElementById('createIssueModal');
+            modal.style.display = 'flex';
+            var titleInput = modal.querySelector('input[name=title]');
+            if (titleInput) titleInput.focus();
+        }
+
+        function closeCreateModal(event) {
+            if (event && event.target && event.target.id !== 'createIssueModal') return;
+            document.getElementById('createIssueModal').style.display = 'none';
+        }
+
+        function handleAfterCreateTicket(event) {
+            if (event && event.detail && event.detail.successful === false) return;
+            closeCreateModal();
+            var form = document.querySelector('#createIssueModal form');
+            if (form) form.reset();
+        }
+
+        function closeIssueDetailModal(event) {
+            if (event && event.target && event.target.id !== 'issueDetailBackdrop') return;
+            var container = document.getElementById('modal-container');
+            if (container) container.innerHTML = '';
+        }
+
+        function copyGitBranch() {
+            var input = document.getElementById('gitBranchInput');
+            if (!input) return;
+
+            navigator.clipboard.writeText(input.value).then(function() {
+                var btn = document.querySelector('.btn-copy');
+                var text = document.getElementById('copyBtnText');
+                if (btn && text) {
+                    btn.classList.add('copied');
+                    text.innerText = '✓ Copiado!';
+                    setTimeout(function() {
+                        btn.classList.remove('copied');
+                        text.innerText = 'Copiar Branch';
+                    }, 2000);
+                }
+            }).catch(function() {
+                input.select();
+                document.execCommand('copy');
+                alert('Branch copiada: ' + input.value);
+            });
+        }
+
+        // Handlers de Drag and Drop
+        function handleDragStart(e, key) {
+            draggedIssueKey = key;
+            e.dataTransfer.setData('text/plain', key);
+            e.dataTransfer.effectAllowed = 'move';
+            if (e.target && e.target.classList) {
+                e.target.classList.add('dragging');
+            }
+        }
+
+        function handleDragEnd(e) {
+            if (e.target && e.target.classList) {
+                e.target.classList.remove('dragging');
+            }
+            document.querySelectorAll('.kanban-col').forEach(function(col) {
+                col.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            var col = e.currentTarget;
+            if (col && !col.classList.contains('drag-over')) {
+                col.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            var col = e.currentTarget;
+            if (col) {
+                col.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e, targetStatus) {
+            e.preventDefault();
+            var col = e.currentTarget;
+            if (col) {
+                col.classList.remove('drag-over');
+            }
+
+            var key = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || draggedIssueKey;
+            if (!key) return;
+
+            var url = '/api/v1/issues/' + encodeURIComponent(key) + '/status?status=' + encodeURIComponent(targetStatus);
+            htmx.ajax('PUT', url, {
+                target: '#kanban-container',
+                swap: 'innerHTML',
+                values: { status: targetStatus }
+            });
+        }
+
+        // Funções de Telemetria de Bateria do Servidor
+        function dismissBatteryToast() {
+            var toast = document.getElementById('serverBatteryToast');
+            if (toast) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(15px)';
+                setTimeout(function() { toast.style.display = 'none'; }, 300);
+            }
+        }
+
+        function showBatteryToast(force) {
+            fetch('/api/v1/server/battery')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    updateBatteryElements(data);
+                    var toast = document.getElementById('serverBatteryToast');
+                    if (toast) {
+                        toast.style.display = 'flex';
+                        setTimeout(function() {
+                            toast.style.opacity = '1';
+                            toast.style.transform = 'translateY(0)';
+                        }, 10);
+                        if (!data.isLow && !force) {
+                            setTimeout(dismissBatteryToast, 6500);
+                        }
+                    }
+                }).catch(function() {});
+        }
+
+        function updateBatteryElements(data) {
+            var pills = document.querySelectorAll('.server-battery-pill');
+            pills.forEach(function(pill) {
+                if (data.isCharging) {
+                    pill.classList.add('battery-charging');
+                    pill.classList.remove('battery-low');
+                } else if (data.isLow) {
+                    pill.classList.add('battery-low');
+                    pill.classList.remove('battery-charging');
+                } else {
+                    pill.classList.remove('battery-charging', 'battery-low');
+                }
+            });
+            var levels = document.querySelectorAll('.server-battery-level-text');
+            levels.forEach(function(el) { el.innerText = data.level + '%'; });
+            var icons = document.querySelectorAll('.server-battery-icon');
+            icons.forEach(function(el) { el.innerText = data.icon; });
+            var desc = document.getElementById('serverBatteryToastDesc');
+            if (desc) {
+                desc.innerHTML = 'Bateria em <strong>' + data.level + '%</strong> &bull; ' + data.statusText;
+            }
+            var toastIcon = document.getElementById('serverBatteryToastIcon');
+            if (toastIcon) toastIcon.innerText = data.icon;
+        }
+
+        // Modal de Ajuda SSL / Certificado
+        function openSslModal(e) {
+            if (e) e.preventDefault();
+            var modal = document.getElementById('sslModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeSslModal(e) {
+            if (e && e.target && e.target.id !== 'sslModal') return;
+            var modal = document.getElementById('sslModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Inicializa notificação e polling de bateria a cada 30 segundos
+        window.addEventListener('DOMContentLoaded', function() {
+            showBatteryToast(false);
+            setInterval(function() {
+                fetch('/api/v1/server/battery')
+                    .then(function(r) { return r.json(); })
+                    .then(updateBatteryElements)
+                    .catch(function() {});
+            }, 30000);
+        });
+    </script>
+
+    <!-- Container de Notificação Flutuante da Bateria do Servidor -->
+    <div class="server-toast-container" id="serverToastContainer">
+        <div class="server-battery-toast {{#serverBatteryLow}}toast-low{{/serverBatteryLow}} {{#serverBatteryCharging}}toast-charging{{/serverBatteryCharging}}" id="serverBatteryToast" style="display: none;">
+            <div class="toast-icon-wrap" id="serverBatteryToastIcon">{{serverBatteryIcon}}</div>
+            <div class="toast-content">
+                <div class="toast-title">Servidor Android (sprintt)</div>
+                <div class="toast-subtitle" id="serverBatteryToastDesc">Bateria em <strong>{{serverBatteryLevel}}%</strong> &bull; {{serverBatteryStatus}}</div>
+            </div>
+            <button type="button" class="toast-close-btn" onclick="dismissBatteryToast()">&times;</button>
+        </div>
+    </div>
+
+    <!-- Modal de Instalação do Certificado SSL / Resolução de Não Seguro -->
+    <div class="modal-backdrop" id="sslModal" style="display: none;" onclick="closeSslModal(event)">
+        <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <span>🔒</span> Certificado SSL e Resolução de "Não Seguro"
+                </h3>
+                <button type="button" class="modal-close-btn" onclick="closeSslModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="font-size: 0.88rem; line-height: 1.55; color: var(--text-secondary);">
+                <p style="margin-bottom: 12px;">
+                    O <strong>sprintt</strong> opera com TLS/HTTPS seguro sob o domínio <code>https://sprintt.local:8443</code>. Para que seu navegador exiba o cadeado verde e elimine o aviso de "Não Seguro", instale a Autoridade Certificadora local (CA).
+                </p>
+
+                <div style="background: var(--bg-column); border-radius: 8px; padding: 14px; margin-bottom: 16px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <strong style="color: var(--text-primary); font-size: 0.9rem;">Certificado Raiz (rootCA.pem)</strong>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">Válido até 2036 &bull; mkcert CA</div>
+                    </div>
+                    <a href="/rootCA.pem" download="rootCA.pem" class="btn-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+                        ⬇ Baixar rootCA.pem
+                    </a>
+                </div>
+
+                <h4 style="color: var(--text-primary); font-size: 0.9rem; margin-bottom: 6px;">Como confiar o certificado no seu sistema:</h4>
+                <ul style="padding-left: 20px; margin-bottom: 12px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>Linux / Ubuntu:</strong> Baixe o arquivo e rode: <code>sudo cp rootCA.pem /usr/local/share/ca-certificates/sprintt-ca.crt &amp;&amp; sudo update-ca-certificates</code></li>
+                    <li><strong>Windows:</strong> Abra o <code>rootCA.pem</code> &gt; "Instalar Certificado" &gt; "Computador Local" &gt; pasta "Autoridades de Certificação Raiz Confiáveis".</li>
+                    <li><strong>macOS:</strong> Abra no "Acesso às Chaves" (Keychain Access) &gt; Sistema &gt; clique duas vezes e marque "Sempre Confiar".</li>
+                    <li><strong>Navegadores (Chrome/Edge/Firefox):</strong> Configurações &gt; Privacidade e Segurança &gt; Gerenciar Certificados &gt; Importar em "Autoridades".</li>
+                    <li><strong>Android:</strong> Configurações &gt; Segurança &gt; Instalar do Armazenamento &gt; "Certificado CA".</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeSslModal()">Fechar</button>
+                <a href="/rootCA.pem" download="rootCA.pem" class="btn-primary">Baixar Certificado</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

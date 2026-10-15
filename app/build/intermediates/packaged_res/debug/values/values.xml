@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="admin_action_project">#D97706</color>
+    <color name="admin_action_reports">#7C3AED</color>
+    <color name="admin_action_swagger">#059669</color>
+    <color name="admin_action_user">#4F46E5</color>
+    <color name="admin_action_web">#0052CC</color>
+    <color name="admin_card_border">#E2E8F0</color>
+    <color name="admin_server_badge_bg">#ECFDF5</color>
+    <color name="admin_server_online">#10B981</color>
+    <color name="bg_screen">#F4F5F7</color>
+    <color name="brand_accent">#06B6D4</color>
+    <color name="brand_primary">#6366F1</color>
+    <color name="brand_primary_dark">#4F46E5</color>
+    <color name="brand_primary_light">#EEF2FF</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="divider_color">#EBECF0</color>
+    <color name="issue_type_bug">#FF5630</color>
+    <color name="issue_type_epic">#6554C0</color>
+    <color name="issue_type_story">#36B37E</color>
+    <color name="issue_type_task">#4C9AFF</color>
+    <color name="jira_accent">#06B6D4</color>
+    <color name="jira_blue_dark">#4F46E5</color>
+    <color name="jira_blue_light">#EEF2FF</color>
+    <color name="jira_blue_primary">#6366F1</color>
+    <color name="priority_high">#FF7452</color>
+    <color name="priority_highest">#FF5630</color>
+    <color name="priority_low">#36B37E</color>
+    <color name="priority_lowest">#0065FF</color>
+    <color name="priority_medium">#FFAB00</color>
+    <color name="status_done_bg">#E3FCEF</color>
+    <color name="status_done_text">#006644</color>
+    <color name="status_in_progress_bg">#DEEBFF</color>
+    <color name="status_in_progress_text">#0747A6</color>
+    <color name="status_todo_bg">#DFE1E6</color>
+    <color name="status_todo_text">#42526E</color>
+    <color name="text_primary">#172B4D</color>
+    <color name="text_secondary">#6B778C</color>
+    <string name="action_create">Criar</string>
+    <string name="action_save">Salvar</string>
+    <string name="app_name">sprintt</string>
+    <string name="hint_issue_description">Descrição detalhada...</string>
+    <string name="hint_issue_title">O que precisa ser feito?</string>
+    <string name="status_done">Concluído</string>
+    <string name="status_in_progress">Em Progresso</string>
+    <string name="status_todo">A Fazer</string>
+    <string name="title_backlog">Backlog</string>
+    <string name="title_board">Quadro Kanban</string>
+    <string name="title_create_issue">Novo Ticket</string>
+    <style name="Theme.Sprintt" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryVariant">@color/brand_primary_dark</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/brand_accent</item>
+        <item name="colorSecondaryVariant">@color/brand_primary_dark</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="android:statusBarColor">@color/brand_primary_dark</item>
+        <item name="android:windowBackground">@color/bg_screen</item>
+    </style>
+</resources>

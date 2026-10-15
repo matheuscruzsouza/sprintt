@@ -1,0 +1,115 @@
+{{#hasActiveSprint}}
+<div class="kanban-grid">
+    <!-- Coluna A Fazer -->
+    <div class="kanban-col" data-status="TODO" 
+         ondragover="handleDragOver(event)" 
+         ondragleave="handleDragLeave(event)" 
+         ondrop="handleDrop(event, 'TODO')">
+        <div class="col-header">
+            <div class="col-title-wrap">
+                <span class="col-status-dot dot-todo"></span>
+                <span class="col-title">A Fazer</span>
+            </div>
+            <span class="col-counter">{{todoCount}}</span>
+        </div>
+        {{#todoIssues}}
+        <div class="issue-card type-{{type}}" 
+             draggable="true" 
+             data-key="{{key}}"
+             ondragstart="handleDragStart(event, '{{key}}')"
+             ondragend="handleDragEnd(event)">
+            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                <span class="issue-key">{{key}}</span>
+                <span class="issue-type-badge">{{type}}</span>
+            </div>
+            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
+            <div class="card-bottom">
+                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                    <span>@{{assignee}}</span>
+                </div>
+            </div>
+        </div>
+        {{/todoIssues}}
+    </div>
+
+    <!-- Coluna Em Progresso -->
+    <div class="kanban-col" data-status="IN_PROGRESS" 
+         ondragover="handleDragOver(event)" 
+         ondragleave="handleDragLeave(event)" 
+         ondrop="handleDrop(event, 'IN_PROGRESS')">
+        <div class="col-header">
+            <div class="col-title-wrap">
+                <span class="col-status-dot dot-inprogress"></span>
+                <span class="col-title">Em Progresso</span>
+            </div>
+            <span class="col-counter">{{inProgressCount}}</span>
+        </div>
+        {{#inProgressIssues}}
+        <div class="issue-card type-{{type}}" 
+             draggable="true" 
+             data-key="{{key}}"
+             ondragstart="handleDragStart(event, '{{key}}')"
+             ondragend="handleDragEnd(event)">
+            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                <span class="issue-key">{{key}}</span>
+                <span class="issue-type-badge">{{type}}</span>
+            </div>
+            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
+            <div class="card-bottom">
+                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                    <span>@{{assignee}}</span>
+                </div>
+            </div>
+        </div>
+        {{/inProgressIssues}}
+    </div>
+
+    <!-- Coluna Concluído -->
+    <div class="kanban-col" data-status="DONE" 
+         ondragover="handleDragOver(event)" 
+         ondragleave="handleDragLeave(event)" 
+         ondrop="handleDrop(event, 'DONE')">
+        <div class="col-header">
+            <div class="col-title-wrap">
+                <span class="col-status-dot dot-done"></span>
+                <span class="col-title">Concluído</span>
+            </div>
+            <span class="col-counter">{{doneCount}}</span>
+        </div>
+        {{#doneIssues}}
+        <div class="issue-card type-{{type}}" 
+             draggable="true" 
+             data-key="{{key}}"
+             ondragstart="handleDragStart(event, '{{key}}')"
+             ondragend="handleDragEnd(event)">
+            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                <span class="issue-key">{{key}}</span>
+                <span class="issue-type-badge">{{type}}</span>
+            </div>
+            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
+            <div class="card-bottom">
+                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
+                    <span class="story-point-badge">{{storyPoints}} SP</span>
+                    <span>@{{assignee}}</span>
+                </div>
+            </div>
+        </div>
+        {{/doneIssues}}
+    </div>
+</div>
+{{/hasActiveSprint}}
+
+{{^hasActiveSprint}}
+<div style="background: var(--bg-surface); border: 2px dashed var(--border-subtle); border-radius: 12px; padding: 48px 24px; text-align: center; margin-top: 10px;">
+    <div style="font-size: 2.4rem; margin-bottom: 12px;">🏃‍♂️</div>
+    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Nenhuma Sprint Ativa em Execução</h3>
+    <p style="color: var(--text-secondary); max-width: 520px; margin: 0 auto 22px auto; font-size: 0.88rem; line-height: 1.5;">
+        Este projeto não possui uma Sprint em andamento no momento. Os tickets permanecem organizados no <strong>Product Backlog</strong> e em <strong>Sprints Futuras</strong>. Inicie uma Sprint para começar a movimentar tarefas no Kanban.
+    </p>
+    <a href="/projetos/{{currentProjectKey}}/backlog" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600;">
+        <span>Ir para o Backlog &amp; Iniciar Sprint</span> ➔
+    </a>
+</div>
+{{/hasActiveSprint}}
