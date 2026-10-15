@@ -2,6 +2,10 @@
 
 <div align="center">
 
+<img src="docs/assets/icon_round.png" alt="Sprintt App Icon" width="110" height="110" style="border-radius: 26px; box-shadow: 0 10px 25px rgba(2, 132, 199, 0.45);" />
+
+<br/><br/>
+
 ![Android](https://img.shields.io/badge/Android-14%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9%2B-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
 ![TLS / HTTPS](https://img.shields.io/badge/Security-TLS%20HTTPS-0284c7?style=for-the-badge&logo=letsencrypt&logoColor=white)
