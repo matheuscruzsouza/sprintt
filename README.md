@@ -1,4 +1,4 @@
-# 🎯 Sprintt (TicketMaster Engine)
+# 🎯 Sprintt
 
 <div align="center">
 
@@ -13,7 +13,7 @@
 **Servidor ágil embarcado em Android para gestão autônoma de projetos locais.**  
 *Quadro Kanban dinâmico, planejamento de sprints, telemetria em tempo real, relatórios analíticos e acesso seguro via mDNS na rede local.*
 
-[Documentação Online](https://matheuscruzsouza.github.io/ticketmaster/) • [Histórico de Alterações](docs/changelog.html) • [Baixar Certificado SSL](docs/rootCA.pem)
+[Documentação Online](https://matheuscruzsouza.github.io/sprintt/) • [Histórico de Alterações](docs/changelog.html) • [Baixar Certificado SSL](docs/rootCA.pem)
 
 </div>
 
@@ -86,8 +86,8 @@ Sem necessidade de conexão com a nuvem, banco de dados externo ou containers Do
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/matheuscruzsouza/ticketmaster.git
-cd ticketmaster
+git clone https://github.com/matheuscruzsouza/sprintt.git
+cd sprintt
 
 # Compilar o APK de depuração
 ./gradlew assembleDebug
