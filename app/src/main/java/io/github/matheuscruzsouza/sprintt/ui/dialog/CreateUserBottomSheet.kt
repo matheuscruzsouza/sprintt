@@ -45,10 +45,31 @@ class CreateUserBottomSheet(
                 return@setOnClickListener
             }
 
-            repo.createUser(username, fullName, email, role)
-            Toast.makeText(requireContext(), "Membro @$username cadastrado com sucesso!", Toast.LENGTH_SHORT).show()
-            onUserCreated()
-            dismiss()
+            val newUser = repo.createUser(username, fullName, email, role)
+            val code = newUser.setupCode ?: ""
+
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Membro Cadastrado!")
+                .setMessage(
+                    "O usuário @${newUser.username} foi criado com sucesso.\n\n" +
+                    "Entregue este código de ativação para que ele defina sua senha no primeiro acesso:\n\n" +
+                    "🔑 CÓDIGO DE 6 DÍGITOS: $code\n\n" +
+                    "(Este código pode ser copiado para a área de transferência)"
+                )
+                .setPositiveButton("Copiar Código") { _, _ ->
+                    val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    val clip = android.content.ClipData.newPlainText("Código de Ativação", code)
+                    clipboard.setPrimaryClip(clip)
+                    Toast.makeText(requireContext(), "Código $code copiado!", Toast.LENGTH_SHORT).show()
+                    onUserCreated()
+                    dismiss()
+                }
+                .setNegativeButton("Concluir") { _, _ ->
+                    onUserCreated()
+                    dismiss()
+                }
+                .setCancelable(false)
+                .show()
         }
     }
 

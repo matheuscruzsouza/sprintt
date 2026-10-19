@@ -14,6 +14,51 @@ import fi.iki.elonen.NanoHTTPD.IHTTPSession
 @Tag(name = "Servidor", description = "Telemetria de Hardware e Estado do Servidor Android")
 class ServerApiController {
 
+    companion object {
+        private val batteryEmitters = java.util.concurrent.CopyOnWriteArrayList<com.github.matheuscruzsouza.nanospring.sse.SseEmitter>()
+
+        fun broadcastBatteryUpdate(info: ServerBatteryInfo) {
+            val toRemove = mutableListOf<com.github.matheuscruzsouza.nanospring.sse.SseEmitter>()
+            for (emitter in batteryEmitters) {
+                try {
+                    emitter.send("battery_update", info)
+                } catch (_: Exception) {
+                    toRemove.add(emitter)
+                }
+            }
+            if (toRemove.isNotEmpty()) {
+                batteryEmitters.removeAll(toRemove)
+            }
+        }
+    }
+
+    @GetMethod(value = "/battery-sse", mimeType = "text/event-stream")
+    @Operation(summary = "Stream SSE de eventos da bateria", description = "Conexão persistente Server-Sent Events que emite atualizações instantâneas de bateria")
+    fun batterySse(): com.github.matheuscruzsouza.nanospring.sse.SseEmitter {
+        val emitter = com.github.matheuscruzsouza.nanospring.sse.SseEmitter()
+        batteryEmitters.add(emitter)
+
+        emitter.onCompletion {
+            batteryEmitters.remove(emitter)
+        }
+        emitter.onError {
+            batteryEmitters.remove(emitter)
+        }
+        emitter.onTimeout {
+            batteryEmitters.remove(emitter)
+        }
+
+        // Envia o estado atual imediatamente na abertura da conexão
+        try {
+            val initial = ServerBatteryProvider.getBatteryInfo(SprinttApp.instance)
+            emitter.send("battery_update", initial)
+        } catch (_: Exception) {
+            batteryEmitters.remove(emitter)
+        }
+
+        return emitter
+    }
+
     @GetMethod("/battery")
     @Operation(summary = "Status da bateria do servidor", description = "Retorna nível de bateria, carregamento e saúde energética")
     fun getBattery(session: IHTTPSession): Any {

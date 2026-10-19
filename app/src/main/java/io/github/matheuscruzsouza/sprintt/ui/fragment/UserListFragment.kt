@@ -29,9 +29,42 @@ class UserListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        userAdapter = UserAdapter { user ->
-            Toast.makeText(requireContext(), "${user.fullName} (${user.role})", Toast.LENGTH_SHORT).show()
-        }
+        userAdapter = UserAdapter(
+            onUserClick = { user ->
+                val statusText = if (user.status == "PENDING_SETUP") {
+                    "Status: Aguardando Primeiro Acesso\nCódigo: ${user.setupCode ?: "Não gerado"}"
+                } else {
+                    "Status: Ativo\nSenha já configurada."
+                }
+                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("${user.fullName} (@${user.username})")
+                    .setMessage("Cargo: ${user.role}\nE-mail: ${user.email}\n\n$statusText")
+                    .setPositiveButton("OK", null)
+                    .show()
+            },
+            onResetCodeClick = { user ->
+                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("Forçar Novo Código?")
+                    .setMessage("Deseja gerar um novo código de ativação de 6 dígitos para o usuário @${user.username}? A senha atual será invalidada até que ele defina uma nova com este código.")
+                    .setPositiveButton("Gerar Código") { _, _ ->
+                        val code = SprinttApp.instance.ticketRepository.generateSetupCode(user.id) ?: ""
+                        refreshData()
+                        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                            .setTitle("Novo Código Gerado!")
+                            .setMessage("🔑 CÓDIGO DE 6 DÍGITOS: $code\n\nEntregue este código ao usuário @${user.username} para que ele redefina sua senha.")
+                            .setPositiveButton("Copiar") { _, _ ->
+                                val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("Código de 6 dígitos", code)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(requireContext(), "Código copiado: $code", Toast.LENGTH_SHORT).show()
+                            }
+                            .setNegativeButton("Fechar", null)
+                            .show()
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
+            }
+        )
 
         binding.recyclerViewUsers.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewUsers.adapter = userAdapter

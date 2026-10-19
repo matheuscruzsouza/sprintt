@@ -54,6 +54,30 @@ class UserApiController {
         return ResponseEntity.status(201).body(user)
     }
 
+    @PostMethod("/:id/reset-code")
+    @Operation(summary = "Forçar geração de novo código de ativação", description = "Gera um novo código de 6 dígitos para o usuário redefinir a senha")
+    fun forceResetCode(
+        @PathVariable("id") id: String
+    ): ResponseEntity<Map<String, Any?>> {
+        val newCode = repository.generateSetupCode(id)
+        val user = repository.getUserById(id)
+        return if (newCode != null && user != null) {
+            ResponseEntity.ok(mapOf(
+                "success" to true,
+                "userId" to user.id,
+                "username" to user.username,
+                "setupCode" to newCode,
+                "status" to user.status,
+                "message" to "Novo código de 6 dígitos gerado com sucesso!"
+            ))
+        } else {
+            ResponseEntity.status(404).body(mapOf(
+                "success" to false,
+                "message" to "Usuário não encontrado"
+            ))
+        }
+    }
+
     private fun parseFormData(rawBody: String): Map<String, String> {
         val map = mutableMapOf<String, String>()
         if (rawBody.isBlank()) return map

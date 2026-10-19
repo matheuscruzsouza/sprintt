@@ -66,11 +66,12 @@ class IssueListFragment : Fragment() {
 
     fun refreshData() {
         val repo = SprinttApp.instance.ticketRepository
-        val issues = if (filterStatus != null) {
+        val allMatching = if (filterStatus != null) {
             repo.getIssuesByStatus(filterStatus!!)
         } else {
             repo.getAllIssues()
         }
+        val issues = allMatching.filter { it.parentKey.isNullOrBlank() }
 
         binding.tvHeaderCount.text = if (filterStatus != null) {
             "${filterStatus!!.displayName} (${issues.size})"

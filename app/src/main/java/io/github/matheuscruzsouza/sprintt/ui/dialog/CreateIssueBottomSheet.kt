@@ -31,10 +31,11 @@ class CreateIssueBottomSheet(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val availableTypes = IssueType.values().filter { it != IssueType.SUBTASK }
         val typeAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
-            IssueType.values().map { it.displayName }
+            availableTypes.map { it.displayName }
         )
         binding.spinnerType.adapter = typeAdapter
 
@@ -54,7 +55,7 @@ class CreateIssueBottomSheet(
             }
 
             val desc = binding.etDescription.text.toString().trim()
-            val type = IssueType.values()[binding.spinnerType.selectedItemPosition]
+            val type = availableTypes[binding.spinnerType.selectedItemPosition]
             val priority = IssuePriority.values()[binding.spinnerPriority.selectedItemPosition]
             val sp = binding.etStoryPoints.text.toString().toIntOrNull() ?: 1
 

@@ -1,0 +1,451 @@
+<!-- Componente Reutilizável de Sessão do Usuário & Modais de Autenticação / Código de 6 Dígitos -->
+<div class="user-session-pill" id="userSessionPill" onclick="toggleUserDropdown(event)" title="Sessão do Usuário">
+    <div class="user-avatar-circle" id="navUserAvatar">?</div>
+    <span class="user-session-name" id="navUserName">Entrar</span>
+    <span style="font-size: 0.65rem; color: var(--text-muted);">▼</span>
+
+    <!-- Dropdown de Sessão -->
+    <div class="user-session-dropdown" id="userSessionDropdown" onclick="event.stopPropagation()">
+        <div class="dropdown-user-header">
+            <strong id="dropdownUserFullName" style="font-size: 0.88rem; color: var(--text-primary); display: block;">Visitante</strong>
+            <span id="dropdownUserHandle" style="font-size: 0.75rem; color: var(--text-secondary);">@anonimo</span>
+        </div>
+        <button type="button" class="dropdown-action-btn" onclick="openLoginModal('login')">
+            <span>🔄</span> Trocar de Usuário
+        </button>
+        <button type="button" class="dropdown-action-btn" onclick="openLoginModal('activate')">
+            <span>🔑</span> Ativar Conta / Primeiro Acesso
+        </button>
+        <button type="button" class="dropdown-action-btn" onclick="openUsersManagementModal()">
+            <span>👥</span> Gerenciar Equipe &amp; Códigos
+        </button>
+        <button type="button" class="dropdown-action-btn" style="color: #EF4444;" onclick="logoutSprinttUser()">
+            <span>🚪</span> Sair da Sessão
+        </button>
+    </div>
+</div>
+
+<!-- Modal de Autenticação / Primeiro Acesso com Código de 6 Dígitos -->
+<div class="modal-backdrop" id="authModal" style="display: none;" onclick="closeAuthModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 440px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);" id="authModalTitle">
+                Autenticação no sprintt
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeAuthModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">
+                    Entrar com Senha
+                </button>
+                <button type="button" class="auth-tab-btn" id="tabBtnActivate" onclick="switchAuthTab('activate')">
+                    Primeiro Acesso / Redefinir
+                </button>
+            </div>
+
+            <!-- Aba 1: Login com Senha -->
+            <form id="formLogin" onsubmit="handleLoginSubmit(event)" style="display: block;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Nome de Usuário (@handle)</label>
+                    <input type="text" id="loginUsername" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="ex: matheus ou carlos" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Senha</label>
+                    <input type="password" id="loginPassword" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Sua senha de acesso" required>
+                </div>
+                <div id="loginFeedback" style="font-size: 0.8rem; margin-bottom: 12px; display: none;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-weight: 600;">
+                    Entrar no Sistema
+                </button>
+            </form>
+
+            <!-- Aba 2: Primeiro Acesso com Código de 6 Dígitos -->
+            <form id="formActivate" onsubmit="handleActivateSubmit(event)" style="display: none;">
+                <div class="auth-banner-code">
+                    <strong>Código de Ativação</strong><br>
+                    Insira o código alfanumérico de 6 dígitos gerado pelo administrador para definir sua senha de acesso.
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Nome de Usuário (@handle)</label>
+                    <input type="text" id="activateUsername" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="ex: novo_membro" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Código Alfanumérico (6 Dígitos)</label>
+                    <input type="text" id="activateCode" maxlength="6" class="form-input auth-code-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Ex: K7M9X2" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Defina sua Nova Senha</label>
+                    <input type="password" id="activatePassword" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Nova senha segura" required>
+                </div>
+                <div id="activateFeedback" style="font-size: 0.8rem; margin-bottom: 12px; display: none;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-weight: 600;">
+                    Ativar Conta &amp; Definir Senha
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Gestão de Membros e Códigos de Ativação -->
+<div class="modal-backdrop" id="usersManageModal" style="display: none;" onclick="closeUsersManageModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <span>👥</span> Membros da Equipe &amp; Códigos de Acesso
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeUsersManageModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 14px;">
+                Cadastre novos membros ou force a geração de um novo código de 6 dígitos caso algum usuário tenha esquecido a senha.
+            </p>
+
+            <!-- Formulário de Novo Membro -->
+            <div style="background: var(--bg-column); border-radius: 8px; padding: 12px; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
+                <strong style="font-size: 0.85rem; color: var(--text-primary); display: block; margin-bottom: 8px;">+ Adicionar Novo Membro</strong>
+                <form id="formCreateUserWeb" onsubmit="handleCreateUserWebSubmit(event)" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <input type="text" id="newUsername" placeholder="Username (ex: julia)" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="text" id="newFullName" placeholder="Nome Completo" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="email" id="newEmail" placeholder="E-mail" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="text" id="newRole" placeholder="Cargo (ex: Developer)" value="Developer" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <div style="grid-column: span 2; display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+                            Gerar Código &amp; Cadastrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de Usuários Carregada Dinamicamente -->
+            <div id="usersListManageContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 12px;">Carregando usuários...</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeUsersManageModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- Script Central de Sessão & Autenticação Segura com Token HMAC e Bloqueio ---
+(function() {
+    // 1. Configurar HTMX para injetar token assinado e usuário
+    document.addEventListener('htmx:configRequest', function(evt) {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var user = localStorage.getItem('sprintt_user') || '';
+        if (token) {
+            evt.detail.headers['X-Sprintt-Token'] = token;
+            evt.detail.headers['Authorization'] = 'Bearer ' + token;
+        }
+        if (user) {
+            evt.detail.headers['X-Sprintt-User'] = user;
+        }
+    });
+
+    // 2. Verificar se está autenticado
+    verifyAuthSession();
+})();
+
+async function verifyAuthSession() {
+    var token = localStorage.getItem('sprintt_token');
+    if (!token) {
+        enforceLoginGatekeeper();
+        return;
+    }
+
+    try {
+        var resp = await fetch('/api/v1/auth/me', {
+            headers: { 
+                'X-Sprintt-Token': token,
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        if (!resp.ok) {
+            logoutSprinttUser();
+            return;
+        }
+        var data = await resp.json();
+        if (data && data.authenticated && data.user) {
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            updateNavSessionDisplay();
+            hideLoginGatekeeper();
+        } else {
+            logoutSprinttUser();
+        }
+    } catch (e) {
+        // Falha de rede temporaria, mantem display se token existir
+        updateNavSessionDisplay();
+    }
+}
+
+function enforceLoginGatekeeper() {
+    var bodyContent = document.querySelector('.content-body');
+    if (bodyContent) {
+        bodyContent.style.filter = 'blur(8px)';
+        bodyContent.style.pointerEvents = 'none';
+        bodyContent.style.userSelect = 'none';
+    }
+    openLoginModal('login');
+    var closeBtn = document.querySelector('#authModal .modal-close-btn');
+    if (closeBtn) closeBtn.style.display = 'none';
+}
+
+function hideLoginGatekeeper() {
+    var bodyContent = document.querySelector('.content-body');
+    if (bodyContent) {
+        bodyContent.style.filter = 'none';
+        bodyContent.style.pointerEvents = 'auto';
+        bodyContent.style.userSelect = 'auto';
+    }
+    var closeBtn = document.querySelector('#authModal .modal-close-btn');
+    if (closeBtn) closeBtn.style.display = 'block';
+}
+
+function toggleUserDropdown(e) {
+    if (e) e.stopPropagation();
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.toggle('show');
+}
+
+document.addEventListener('click', function() {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+});
+
+function updateNavSessionDisplay() {
+    var user = localStorage.getItem('sprintt_user') || 'Entrar';
+    var fullName = localStorage.getItem('sprintt_user_fullname') || user;
+    var navName = document.getElementById('navUserName');
+    var navAvatar = document.getElementById('navUserAvatar');
+    var ddName = document.getElementById('dropdownUserFullName');
+    var ddHandle = document.getElementById('dropdownUserHandle');
+
+    if (navName) navName.innerText = user;
+    if (navAvatar) navAvatar.innerText = fullName.substring(0, 1).toUpperCase();
+    if (ddName) ddName.innerText = fullName;
+    if (ddHandle) ddHandle.innerText = '@' + user;
+}
+
+function openLoginModal(tab) {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+    var modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'flex';
+    switchAuthTab(tab || 'login');
+}
+
+function closeAuthModal(e) {
+    if (!localStorage.getItem('sprintt_token')) {
+        return; // Impede fechar sem estar autenticado
+    }
+    if (e && e.target !== e.currentTarget) return;
+    var modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+    var btnL = document.getElementById('tabBtnLogin');
+    var btnA = document.getElementById('tabBtnActivate');
+    var fL = document.getElementById('formLogin');
+    var fA = document.getElementById('formActivate');
+    var fbL = document.getElementById('loginFeedback');
+    var fbA = document.getElementById('activateFeedback');
+    if (fbL) fbL.style.display = 'none';
+    if (fbA) fbA.style.display = 'none';
+
+    if (tab === 'activate') {
+        if (btnL) btnL.classList.remove('active');
+        if (btnA) btnA.classList.add('active');
+        if (fL) fL.style.display = 'none';
+        if (fA) fA.style.display = 'block';
+    } else {
+        if (btnA) btnA.classList.remove('active');
+        if (btnL) btnL.classList.add('active');
+        if (fA) fA.style.display = 'none';
+        if (fL) fL.style.display = 'block';
+    }
+}
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('loginUsername').value.trim();
+    var password = document.getElementById('loginPassword').value.trim();
+    var fb = document.getElementById('loginFeedback');
+
+    try {
+        var resp = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password)
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            localStorage.setItem('sprintt_token', data.token);
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            document.cookie = 'sprintt_token=' + data.token + '; path=/; SameSite=Strict';
+            hideLoginGatekeeper();
+            closeAuthModal();
+            location.reload();
+        } else {
+            fb.style.display = 'block';
+            fb.style.color = '#EF4444';
+            fb.innerText = data.message || 'Falha ao autenticar.';
+        }
+    } catch (err) {
+        fb.style.display = 'block';
+        fb.style.color = '#EF4444';
+        fb.innerText = 'Erro de conexão com o servidor.';
+    }
+}
+
+async function handleActivateSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('activateUsername').value.trim();
+    var code = document.getElementById('activateCode').value.trim().toUpperCase();
+    var password = document.getElementById('activatePassword').value.trim();
+    var fb = document.getElementById('activateFeedback');
+
+    try {
+        var resp = await fetch('/api/v1/auth/activate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'username=' + encodeURIComponent(username) + '&code=' + encodeURIComponent(code) + '&password=' + encodeURIComponent(password)
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            localStorage.setItem('sprintt_token', data.token);
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            document.cookie = 'sprintt_token=' + data.token + '; path=/; SameSite=Strict';
+            alert(data.message);
+            hideLoginGatekeeper();
+            closeAuthModal();
+            location.reload();
+        } else {
+            fb.style.display = 'block';
+            fb.style.color = '#EF4444';
+            fb.innerText = data.message || 'Código inválido ou bloqueado.';
+        }
+    } catch (err) {
+        fb.style.display = 'block';
+        fb.style.color = '#EF4444';
+        fb.innerText = 'Erro ao processar ativação.';
+    }
+}
+
+function logoutSprinttUser() {
+    localStorage.removeItem('sprintt_token');
+    localStorage.removeItem('sprintt_user');
+    localStorage.removeItem('sprintt_user_fullname');
+    document.cookie = 'sprintt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    location.reload();
+}
+
+function openUsersManagementModal() {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+    var modal = document.getElementById('usersManageModal');
+    if (modal) modal.style.display = 'flex';
+    loadUsersManageList();
+}
+
+function closeUsersManageModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    var modal = document.getElementById('usersManageModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function loadUsersManageList() {
+    var container = document.getElementById('usersListManageContainer');
+    if (!container) return;
+    try {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var resp = await fetch('/api/v1/users', {
+            headers: { 'X-Sprintt-Token': token, 'Authorization': 'Bearer ' + token }
+        });
+        var users = await resp.json();
+        if (!users || users.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px;">Nenhum usuário cadastrado.</div>';
+            return;
+        }
+        var html = '';
+        users.forEach(function(u) {
+            var isPending = u.status === 'PENDING_SETUP';
+            var statusBadge = isPending 
+                ? '<span style="background: rgba(234, 179, 8, 0.15); color: #EAB308; font-weight: 700; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;">Pendente: ' + (u.setupCode || 'Código Gerado') + '</span>'
+                : '<span style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;">Ativo</span>';
+
+            html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 6px;">' +
+                '<div>' +
+                    '<strong style="color: var(--text-primary); font-size: 0.85rem;">' + u.fullName + '</strong> ' +
+                    '<span style="color: var(--text-secondary); font-size: 0.78rem;">(@' + u.username + ')</span> ' +
+                    statusBadge +
+                    '<div style="font-size: 0.75rem; color: var(--text-muted);">' + u.role + ' &bull; ' + u.email + '</div>' +
+                '</div>' +
+                '<button type="button" class="btn-outline" style="font-size: 0.75rem; padding: 4px 8px;" onclick="forceResetUserCode(\x27' + u.id + '\x27, \x27' + u.username + '\x27)">'  +
+                    '🔑 Forçar Novo Código' +
+                '</button>' +
+            '</div>';
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<div style="color: #EF4444; text-align: center; padding: 12px;">Erro ao carregar usuários.</div>';
+    }
+}
+
+async function handleCreateUserWebSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('newUsername').value.trim();
+    var fullName = document.getElementById('newFullName').value.trim();
+    var email = document.getElementById('newEmail').value.trim();
+    var role = document.getElementById('newRole').value.trim();
+    var token = localStorage.getItem('sprintt_token') || '';
+
+    try {
+        var resp = await fetch('/api/v1/users', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Sprintt-Token': token,
+                'Authorization': 'Bearer ' + token
+            },
+            body: 'username=' + encodeURIComponent(username) + '&fullName=' + encodeURIComponent(fullName) + '&email=' + encodeURIComponent(email) + '&role=' + encodeURIComponent(role)
+        });
+        var newUser = await resp.json();
+        if (resp.ok) {
+            alert('Membro criado com sucesso!\n\n🔑 CÓDIGO DE 6 DÍGITOS: ' + newUser.setupCode + '\n\nEntregue este código ao usuário para definir a senha no primeiro acesso (válido por 24h).');
+            document.getElementById('formCreateUserWeb').reset();
+            loadUsersManageList();
+        } else {
+            alert('Erro ao cadastrar usuário.');
+        }
+    } catch (err) {
+        alert('Falha na comunicação com o servidor.');
+    }
+}
+
+async function forceResetUserCode(userId, username) {
+    if (!confirm('Deseja forçar a geração de um novo código de 6 dígitos para @' + username + '? A senha atual será invalidada.')) return;
+    try {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var resp = await fetch('/api/v1/users/' + userId + '/reset-code', { 
+            method: 'POST',
+            headers: { 'X-Sprintt-Token': token, 'Authorization': 'Bearer ' + token }
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            alert('Novo código gerado com sucesso para @' + username + ':\n\n🔑 CÓDIGO: ' + data.setupCode + '\n\nEntregue este código para o usuário redefinir a senha (válido por 24h).');
+            loadUsersManageList();
+        } else {
+            alert(data.message || 'Erro ao gerar novo código.');
+        }
+    } catch (err) {
+        alert('Falha de conexão.');
+    }
+}
+</script>

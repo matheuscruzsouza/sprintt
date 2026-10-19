@@ -16,6 +16,10 @@
         "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/mipmap-xxhdpi/ic_launcher_round.png"
     },
     {
+        "merged": "io.github.matheuscruzsouza.sprintt.app-merged_res-39:/layout_item_user_card.xml.flat",
+        "source": "io.github.matheuscruzsouza.sprintt.app-main-41:/layout/item_user_card.xml"
+    },
+    {
         "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-merged_res-39:/layout_activity_main.xml.flat",
         "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/activity_main.xml"
     },
@@ -32,12 +36,12 @@
         "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/mipmap-xxhdpi/ic_launcher.png"
     },
     {
-        "merged": "io.github.matheuscruzsouza.sprintt.app-merged_res-39:/layout_fragment_analytics.xml.flat",
-        "source": "io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_analytics.xml"
-    },
-    {
         "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-merged_res-39:/mipmap-xhdpi_ic_launcher.png.flat",
         "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-merged_res-39:/layout_fragment_analytics.xml.flat",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_analytics.xml"
     },
     {
         "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-merged_res-39:/layout_activity_issue_detail.xml.flat",
@@ -98,6 +102,10 @@
     {
         "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-merged_res-39:/drawable_bg_story_points.xml.flat",
         "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/drawable/bg_story_points.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-merged_res-39:/layout_item_subtask.xml.flat",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/item_subtask.xml"
     },
     {
         "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-merged_res-39:/layout_fragment_project_list.xml.flat",

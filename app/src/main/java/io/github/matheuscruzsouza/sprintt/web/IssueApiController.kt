@@ -65,6 +65,15 @@ class IssueApiController {
             formParams.putAll(parseFormData(body))
         }
 
+        // Validar usuário da sessão ativa via token assinado HMAC (X-Sprintt-Token ou Cookie)
+        val sessionToken = session.headers?.get("x-sprintt-token")?.trim()?.ifBlank { null }
+            ?: session.headers?.get("X-Sprintt-Token")?.trim()?.ifBlank { null }
+            ?: session.headers?.get("authorization")?.removePrefix("Bearer ")?.trim()?.ifBlank { null }
+            ?: extractCookieToken(session)
+
+        val validatedUser = repository.validateSessionToken(sessionToken)
+        val defaultAssignee = validatedUser?.username ?: "Matheus"
+
         val view = formParams["view"].orEmpty().trim().lowercase()
         val projectKey = formParams["projectKey"]?.trim()?.uppercase()?.ifBlank { null } ?: "TM"
         val title = formParams["title"]?.trim()?.ifBlank { null } ?: "Sem título"
@@ -72,7 +81,7 @@ class IssueApiController {
         val typeStr = formParams["type"] ?: "TASK"
         val priorityStr = formParams["priority"] ?: "MEDIUM"
         val spStr = formParams["storyPoints"] ?: "1"
-        val assignee = formParams["assignee"]?.trim()?.ifBlank { null } ?: "Matheus"
+        val assignee = formParams["assignee"]?.trim()?.ifBlank { null } ?: defaultAssignee
 
         val type = try { IssueType.valueOf(typeStr) } catch (_: Exception) { IssueType.TASK }
         val priority = try { IssuePriority.valueOf(priorityStr) } catch (_: Exception) { IssuePriority.MEDIUM }
@@ -86,6 +95,8 @@ class IssueApiController {
             }
         }
 
+        val parentKey = formParams["parentKey"]?.trim()?.ifBlank { null }
+
         val createdIssue = repository.createIssue(
             projectKey = projectKey,
             title = title,
@@ -94,7 +105,8 @@ class IssueApiController {
             priority = priority,
             storyPoints = storyPoints,
             assignee = assignee,
-            sprintId = sprintId
+            sprintId = sprintId,
+            parentKey = parentKey
         )
 
         return when {
@@ -104,11 +116,65 @@ class IssueApiController {
             view == "board" -> {
                 JiraWebController.buildBoardModelAndView("jira_kanban_grid", projectKey)
             }
+            view == "modal" && !parentKey.isNullOrBlank() -> {
+                JiraWebController.renderIssueDetail(parentKey)
+            }
             body?.trim()?.startsWith("{") == true && !session.parms.containsKey("view") -> {
                 ResponseEntity.ok(createdIssue)
             }
             else -> {
                 JiraWebController.buildBoardModelAndView("jira_kanban_grid", projectKey)
+            }
+        }
+    }
+
+    @GetMethod("/:key/subtasks")
+    @Operation(summary = "Listar sub-tarefas do ticket", description = "Retorna todas as sub-tarefas vinculadas ao ticket informado")
+    fun getSubtasks(@PathVariable("key") key: String): ResponseEntity<List<Issue>> {
+        val subtasks = repository.getSubtasks(key)
+        return ResponseEntity.ok(subtasks)
+    }
+
+    @PostMethod("/:key/subtasks")
+    @Operation(summary = "Criar sub-tarefa para o ticket", description = "Adiciona uma sub-tarefa diretamente vinculada ao ticket informado")
+    fun createSubtask(
+        @PathVariable("key") key: String,
+        session: IHTTPSession,
+        @RequestBody body: String?
+    ): Any {
+        val formParams = mutableMapOf<String, String>()
+        session.parms?.forEach { (k, v) -> if (v != null) formParams[k.trim()] = v.trim() }
+        if (!body.isNullOrBlank()) formParams.putAll(parseFormData(body))
+
+        val title = formParams["title"]?.trim()?.ifBlank { null } ?: "Nova sub-tarefa"
+        val description = formParams["description"]?.trim() ?: ""
+        val priorityStr = formParams["priority"] ?: "MEDIUM"
+        val spStr = formParams["storyPoints"] ?: "1"
+        val assignee = formParams["assignee"]?.trim()?.ifBlank { null } ?: "Unassigned"
+
+        val priority = try { IssuePriority.valueOf(priorityStr) } catch (_: Exception) { IssuePriority.MEDIUM }
+        val storyPoints = spStr.toIntOrNull() ?: 1
+
+        val subtask = repository.createSubtask(
+            parentKey = key,
+            title = title,
+            description = description,
+            priority = priority,
+            storyPoints = storyPoints,
+            assignee = assignee
+        )
+
+        val view = formParams["view"].orEmpty().trim().lowercase()
+        return when {
+            body?.trim()?.startsWith("{") == true && !formParams.containsKey("view") -> {
+                if (subtask != null) {
+                    ResponseEntity.ok(subtask)
+                } else {
+                    ResponseEntity.status(400).body(mapOf("error" to "Não foi possível criar a sub-tarefa"))
+                }
+            }
+            else -> {
+                JiraWebController.renderIssueDetail(key)
             }
         }
     }
@@ -144,25 +210,56 @@ class IssueApiController {
         session.parms?.forEach { (k, v) -> if (v != null) params[k.trim()] = v.trim() }
         if (!body.isNullOrBlank()) params.putAll(parseFormData(body))
         val statusStr = statusQuery ?: params["status"].orEmpty()
-        val targetStatus = try {
-            IssueStatus.valueOf(statusStr)
-        } catch (_: Exception) {
-            null
-        }
+        val columnId = params["columnId"]
 
-        if (targetStatus != null) {
-            repository.updateIssueStatus(key, targetStatus)
+        if (!columnId.isNullOrBlank()) {
+            repository.updateIssueColumn(key, columnId)
+        } else {
+            val col = repository.getColumnById(statusStr)
+            if (col != null) {
+                repository.updateIssueColumn(key, col.id)
+            } else {
+                val targetStatus = try {
+                    IssueStatus.valueOf(statusStr)
+                } catch (_: Exception) {
+                    null
+                }
+
+                if (targetStatus != null) {
+                    repository.updateIssueStatus(key, targetStatus)
+                }
+            }
         }
 
         val issue = repository.getIssueByKey(key)
         val projectKey = issue?.projectKey ?: "TM"
-        return JiraWebController.buildBoardModelAndView("jira_kanban_grid", projectKey)
+        val view = params["view"]?.trim()?.lowercase()
+        val redirectParentKey = params["parentKey"] ?: issue?.parentKey
+        return when {
+            view == "modal" && !redirectParentKey.isNullOrBlank() -> {
+                JiraWebController.renderIssueDetail(redirectParentKey)
+            }
+            view == "backlog" -> {
+                JiraWebController.buildBacklogModelAndView("jira_backlog_fragment", projectKey)
+            }
+            else -> {
+                JiraWebController.buildBoardModelAndView("jira_kanban_grid", projectKey)
+            }
+        }
     }
 
     @DeleteMethod("/:key")
-    @Operation(summary = "Excluir ticket", description = "Remove um ticket do projeto")
-    fun deleteIssue(@PathVariable("key") key: String): ResponseEntity<Map<String, Any>> {
+    @Operation(summary = "Excluir ticket", description = "Remove um ticket do projeto e suas sub-tarefas em cascata")
+    fun deleteIssue(
+        @PathVariable("key") key: String,
+        session: IHTTPSession
+    ): Any {
+        val parent = repository.getParent(key)
         val deleted = repository.deleteIssue(key)
+        val view = session.parms?.get("view")?.trim()?.lowercase()
+        if (view == "modal" && parent != null) {
+            return JiraWebController.renderIssueDetail(parent.key)
+        }
         return if (deleted) {
             ResponseEntity.ok(mapOf("success" to true, "deletedKey" to key))
         } else {
@@ -194,5 +291,16 @@ class IssueApiController {
             }
         }
         return map
+    }
+
+    private fun extractCookieToken(session: IHTTPSession): String? {
+        val cookieHeader = session.headers?.get("cookie") ?: session.headers?.get("Cookie") ?: return null
+        cookieHeader.split(";").forEach { pair ->
+            val parts = pair.trim().split("=", limit = 2)
+            if (parts.size == 2 && parts[0].trim() == "sprintt_token") {
+                return parts[1].trim()
+            }
+        }
+        return null
     }
 }

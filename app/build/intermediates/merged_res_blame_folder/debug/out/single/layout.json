@@ -24,8 +24,16 @@
         "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/activity_main.xml"
     },
     {
-        "merged": "io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/fragment_analytics.xml",
-        "source": "io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_analytics.xml"
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/item_subtask.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/item_subtask.xml"
+    },
+    {
+        "merged": "io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/item_user_card.xml",
+        "source": "io.github.matheuscruzsouza.sprintt.app-main-41:/layout/item_user_card.xml"
+    },
+    {
+        "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/fragment_analytics.xml",
+        "source": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-main-41:/layout/fragment_analytics.xml"
     },
     {
         "merged": "/home/Matheus/.gradle/daemon/8.4/io.github.matheuscruzsouza.sprintt.app-mergeDebugResources-38:/layout/dialog_create_user.xml",

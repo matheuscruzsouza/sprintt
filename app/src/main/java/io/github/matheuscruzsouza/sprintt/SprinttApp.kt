@@ -23,6 +23,30 @@ class SprinttApp : Application() {
         } else {
             startService(serviceIntent)
         }
+
+        // Monitora mudanças de bateria em tempo real para disparar eventos SSE
+        registerBatteryMonitor()
+    }
+
+    private fun registerBatteryMonitor() {
+        val filter = android.content.IntentFilter().apply {
+            addAction(Intent.ACTION_BATTERY_CHANGED)
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
+        }
+        registerReceiver(object : android.content.BroadcastReceiver() {
+            private var lastLevel = -1
+            private var lastCharging = false
+
+            override fun onReceive(context: android.content.Context?, intent: Intent?) {
+                val info = io.github.matheuscruzsouza.sprintt.service.ServerBatteryProvider.getBatteryInfo(this@SprinttApp)
+                if (info.level != lastLevel || info.isCharging != lastCharging) {
+                    lastLevel = info.level
+                    lastCharging = info.isCharging
+                    io.github.matheuscruzsouza.sprintt.web.ServerApiController.broadcastBatteryUpdate(info)
+                }
+            }
+        }, filter)
     }
 
     companion object {
