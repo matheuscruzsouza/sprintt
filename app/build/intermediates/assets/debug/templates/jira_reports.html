@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
 <head>
+    <script>
+        // Gatekeeper Antecipado: Se não há token, oculta dados para evitar vazamento visual
+        (function() {
+            if (!localStorage.getItem('sprintt_token')) {
+                document.documentElement.classList.add('auth-pending');
+            }
+        })();
+    </script>
+    <style>
+        html.auth-pending .content-body,
+        html.auth-pending .kanban-grid,
+        html.auth-pending .backlog-container,
+        html.auth-pending .projects-grid {
+            display: none !important;
+        }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sprintt &bull; Relatórios &amp; Gestão</title>
@@ -11,72 +27,83 @@
     <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
     <script src="/static/js/htmx.min.js"></script>
     <script>
-        // Carrega o tema imediatamente para evitar flash de tela branca
+        // Carrega o tema e estado da sidebar imediatamente para evitar flash de tela
         (function() {
             var savedTheme = localStorage.getItem('sprintt_theme') || localStorage.getItem('ticketmaster_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', savedTheme);
+
+            var sidebarPref = localStorage.getItem('sprintt_sidebar_collapsed');
+            if (sidebarPref === 'true' || (sidebarPref === null && window.innerWidth <= 1080)) {
+                document.documentElement.classList.add('sidebar-init-collapsed');
+            }
         })();
     </script>
 </head>
 <body>
 
+    <!-- Backdrop para fechamento da sidebar em dispositivos móveis -->
+    <div class="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
     <!-- Sidebar Estilo Linear / Aligno -->
-    <aside class="app-sidebar">
+    <aside class="app-sidebar" id="appSidebar">
         <div class="brand-section">
-            <div class="brand-icon" style="background: linear-gradient(135deg, #6366F1, #06B6D4); border-radius: 8px; box-shadow: 0 2px 10px rgba(99,102,241,0.35);">
+            <div class="brand-icon" style="background: linear-gradient(135deg, #6366F1, #06B6D4); border-radius: 8px; box-shadow: 0 2px 10px rgba(99,102,241,0.35); cursor: pointer;" onclick="toggleSidebar()" title="Recolher/Expandir menu lateral">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="13 17 18 12 13 7"></polyline>
                     <polyline points="6 17 11 12 6 7"></polyline>
                 </svg>
             </div>
-            <div>
+            <div class="brand-text">
                 <div class="brand-title" style="letter-spacing: -0.5px; font-weight: 800;">
                     <span>sprintt</span>
                 </div>
                 <span class="brand-badge" style="background: rgba(6,182,212,0.12); color: #06B6D4; font-weight: 700;">nano-spring 2.1.0</span>
             </div>
+            <button type="button" class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Recolher menu lateral">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
         </div>
 
         <div class="nav-section-title">Navegação</div>
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="/projetos">
+                <a href="/projetos" title="Projetos">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    Projetos
+                    <span>Projetos</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/projetos/{{currentProjectKey}}/sprint">
+                <a href="/projetos/{{currentProjectKey}}/sprint" title="Sprint Ativa">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                    Sprint Ativa
+                    <span>Sprint Ativa</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/projetos/{{currentProjectKey}}/backlog">
+                <a href="/projetos/{{currentProjectKey}}/backlog" title="Backlog & Sprints">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                    Backlog & Sprints
+                    <span>Backlog & Sprints</span>
                 </a>
             </li>
             <li class="nav-item active">
-                <a href="/projetos/{{currentProjectKey}}/relatorios">
+                <a href="/projetos/{{currentProjectKey}}/relatorios" title="Relatórios & Gestão">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                    Relatórios & Gestão
+                    <span>Relatórios & Gestão</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/swagger-ui" target="_blank">
+                <a href="/swagger-ui" target="_blank" title="Swagger OpenAPI">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    Swagger OpenAPI
+                    <span>Swagger OpenAPI</span>
                 </a>
             </li>
         </ul>
 
         <div class="sidebar-footer">
-            <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+            <button type="button" class="theme-toggle-btn" onclick="toggleTheme()" title="Alternar Modo Claro / Escuro">
                 <span id="themeToggleLabel">🌙 Modo Escuro</span>
                 <span id="themeToggleIcon">☀️</span>
             </button>
-            <div class="server-pill" onclick="openSslModal()" style="cursor: pointer;" title="Configuração SSL e mDNS">
+            <div class="server-pill" onclick="openSslModal()" style="cursor: pointer;" title="Configuração SSL e mDNS: sprintt.local:8443">
                 <span class="pulse-dot"></span>
                 <span>sprintt.local:8443</span>
             </div>
@@ -89,8 +116,8 @@
                 <span class="server-battery-level-text">{{serverBatteryLevel}}%</span>
                 <span style="font-size: 0.7rem; opacity: 0.85;">{{serverBatteryStatus}}</span>
             </div>
-            <a href="javascript:void(0)" onclick="openSslModal()" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: none; text-align: center; margin-top: 4px;">
-                🔒 Certificado SSL (Como Instalar)
+            <a href="javascript:void(0)" onclick="openSslModal()" class="sidebar-ssl-link" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: none; text-align: center; margin-top: 4px;" title="Certificado SSL (Como Instalar)">
+                🔒 <span>Certificado SSL (Como Instalar)</span>
             </a>
         </div>
     </aside>
@@ -99,23 +126,29 @@
     <main class="app-main">
         <header class="top-bar">
             <div class="top-bar-left">
-                <div class="breadcrumb-path">
-                    <a href="/projetos" style="color: var(--text-secondary); text-decoration: none;">Projetos</a>
-                    <span>/</span>
-                    <strong id="breadcrumbProject">{{currentProjectName}}</strong>
-                    <span>/</span>
-                    <span style="color: var(--text-muted);">Relatórios &amp; Gestão</span>
-                </div>
+                <button type="button" class="topbar-sidebar-toggle" onclick="toggleSidebar()" title="Recolher / Expandir Menu lateral">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
 
-                <!-- Seletor Rápido de Projetos -->
-                <select id="projectSelect"
-                        style="padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); cursor: pointer;"
-                        name="projectKey"
-                        onchange="window.location.href='/projetos/' + this.value + '/relatorios'">
-                    {{#projects}}
-                    <option value="{{key}}" {{#isSelected}}selected{{/isSelected}}>{{name}} ({{key}})</option>
-                    {{/projects}}
-                </select>
+                <div class="breadcrumb-path">
+                    <a href="/projetos">Projetos</a>
+                    <span class="breadcrumb-sep">/</span>
+                    <select id="projectSelect"
+                            class="topbar-project-select"
+                            name="projectKey"
+                            onchange="window.location.href='/projetos/' + this.value + '/relatorios'">
+                        {{#projects}}
+                        <option value="{{key}}" {{#isSelected}}selected{{/isSelected}}>{{name}} ({{key}})</option>
+                        {{/projects}}
+                    </select>
+                    <span id="breadcrumbProject" style="display:none">{{currentProjectName}}</span>
+                    <span class="breadcrumb-sep">/</span>
+                    <span class="breadcrumb-page-name" style="color: var(--text-muted);">Relatórios &amp; Gestão</span>
+                </div>
             </div>
 
             <div class="top-bar-actions">
@@ -125,11 +158,11 @@
                      style="cursor: pointer;"
                      title="Servidor Android: {{serverBatteryFormatted}} (clique para detalhes)">
                     <span class="server-battery-icon">{{serverBatteryIcon}}</span>
-                    <span>Bateria Servidor: <strong class="server-battery-level-text">{{serverBatteryLevel}}%</strong></span>
+                    <span><span class="battery-label-full">Bateria Servidor: </span><strong class="server-battery-level-text">{{serverBatteryLevel}}%</strong></span>
                 </div>
 
-                <button type="button" class="btn-outline" onclick="openSslModal()" style="font-size: 0.8rem; padding: 6px 12px;">
-                    🔒 SSL &amp; mDNS
+                <button type="button" class="btn-outline topbar-ssl-btn" onclick="openSslModal()" style="font-size: 0.8rem; padding: 6px 12px;">
+                    <span>🔒</span> <span class="btn-text-full">SSL &amp; mDNS</span><span class="btn-text-short" style="display:none;">SSL</span>
                 </button>
 
                 <div class="sprint-filter-wrapper">
@@ -143,7 +176,35 @@
                     </select>
                 </div>
                 <a href="/projetos/{{currentProjectKey}}/sprint" class="btn-primary" style="font-size: 0.8rem; padding: 6px 12px;">Ir ao Quadro ➔</a>
-            </div>
+            
+
+<!-- Componente Reutilizável de Sessão do Usuário & Modais de Autenticação / Código de 6 Dígitos -->
+<div class="user-session-pill" id="userSessionPill" onclick="toggleUserDropdown(event)" title="Sessão do Usuário">
+    <div class="user-avatar-circle" id="navUserAvatar">?</div>
+    <span class="user-session-name" id="navUserName">Entrar</span>
+    <span style="font-size: 0.65rem; color: var(--text-muted);">▼</span>
+
+    <!-- Dropdown de Sessão -->
+    <div class="user-session-dropdown" id="userSessionDropdown" onclick="event.stopPropagation()">
+        <div class="dropdown-user-header">
+            <strong id="dropdownUserFullName" style="font-size: 0.88rem; color: var(--text-primary); display: block;">Visitante</strong>
+            <span id="dropdownUserHandle" style="font-size: 0.75rem; color: var(--text-secondary);">@anonimo</span>
+        </div>
+        <button type="button" class="dropdown-action-btn" onclick="openLoginModal('login')">
+            <span>🔄</span> Trocar de Usuário
+        </button>
+        <button type="button" class="dropdown-action-btn" onclick="openLoginModal('activate')">
+            <span>🔑</span> Ativar Conta / Primeiro Acesso
+        </button>
+        <button type="button" class="dropdown-action-btn" onclick="openUsersManagementModal()">
+            <span>👥</span> Gerenciar Equipe &amp; Códigos
+        </button>
+        <button type="button" class="dropdown-action-btn" style="color: #EF4444;" onclick="logoutSprinttUser()">
+            <span>🚪</span> Sair da Sessão
+        </button>
+    </div>
+</div>
+</div>
         </header>
 
         <section class="content-body" style="display: flex; flex-direction: column; gap: 24px;">
@@ -279,7 +340,7 @@
 
                     <div class="panel-footer-note">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                        <span>O gráfico reflete a queima de pontos da sprint ativa ao longo dos 10 dias de ciclo padrão.</span>
+                        <span>Ciclo da Sprint: Dia {{currentSprintDay}} de {{totalSprintDays}} dias corridos. Story Points contados no escopo principal.</span>
                     </div>
                 </section>
 
@@ -380,19 +441,63 @@
                     icon.textContent = '☀️';
                 }
             }
+        function toggleSidebar() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (!sidebar) return;
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('mobile-open');
+                var backdrop = document.querySelector('.sidebar-backdrop');
+                if (backdrop) backdrop.classList.toggle('active', sidebar.classList.contains('mobile-open'));
+            } else {
+                var isCollapsed = sidebar.classList.toggle('collapsed');
+                localStorage.setItem('sprintt_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            }
+        }
+
+        function closeMobileSidebar() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+            var backdrop = document.querySelector('.sidebar-backdrop');
+            if (backdrop) backdrop.classList.remove('active');
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (sidebar && document.documentElement.classList.contains('sidebar-init-collapsed')) {
+                sidebar.classList.add('collapsed');
+                document.documentElement.classList.remove('sidebar-init-collapsed');
+            }
             var savedTheme = localStorage.getItem('sprintt_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             updateThemeButtonText(savedTheme);
             showBatteryToast(false);
-            setInterval(function() {
-                fetch('/api/v1/server/battery')
-                    .then(function(r) { return r.json(); })
-                    .then(updateBatteryElements)
-                    .catch(function() {});
-            }, 30000);
+            initBatterySse();
         });
+
+        // Monitoramento da Bateria em Tempo Real via Server-Sent Events (SSE)
+        var batteryEventSource = null;
+
+        function initBatterySse() {
+            if (typeof EventSource === 'undefined') {
+                showBatteryToast(false);
+                return;
+            }
+
+            if (batteryEventSource) {
+                try { batteryEventSource.close(); } catch(e) {}
+            }
+
+            batteryEventSource = new EventSource('/api/v1/server/battery-sse');
+
+            batteryEventSource.addEventListener('battery_update', function(e) {
+                try {
+                    var data = JSON.parse(e.data);
+                    updateBatteryElements(data);
+                    if (data.isLow) {
+                        showBatteryToast(false);
+                    }
+                } catch(err) {}
+            });
+        }
 
         // Funções de Telemetria de Bateria do Servidor
         function dismissBatteryToast() {
@@ -513,5 +618,432 @@
             </div>
         </div>
     </div>
+
+
+<!-- Modal de Autenticação / Primeiro Acesso com Código de 6 Dígitos -->
+<div class="modal-backdrop" id="authModal" style="display: none;" onclick="closeAuthModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 440px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);" id="authModalTitle">
+                Autenticação no sprintt
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeAuthModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">
+                    Entrar com Senha
+                </button>
+                <button type="button" class="auth-tab-btn" id="tabBtnActivate" onclick="switchAuthTab('activate')">
+                    Primeiro Acesso / Redefinir
+                </button>
+            </div>
+
+            <!-- Aba 1: Login com Senha -->
+            <form id="formLogin" onsubmit="handleLoginSubmit(event)" style="display: block;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Nome de Usuário (@handle)</label>
+                    <input type="text" id="loginUsername" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="ex: matheus ou carlos" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Senha</label>
+                    <input type="password" id="loginPassword" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Sua senha de acesso" required>
+                </div>
+                <div id="loginFeedback" style="font-size: 0.8rem; margin-bottom: 12px; display: none;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-weight: 600;">
+                    Entrar no Sistema
+                </button>
+            </form>
+
+            <!-- Aba 2: Primeiro Acesso com Código de 6 Dígitos -->
+            <form id="formActivate" onsubmit="handleActivateSubmit(event)" style="display: none;">
+                <div class="auth-banner-code">
+                    <strong>Código de Ativação</strong><br>
+                    Insira o código alfanumérico de 6 dígitos gerado pelo administrador para definir sua senha de acesso.
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Nome de Usuário (@handle)</label>
+                    <input type="text" id="activateUsername" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="ex: novo_membro" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Código Alfanumérico (6 Dígitos)</label>
+                    <input type="text" id="activateCode" maxlength="6" class="form-input auth-code-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Ex: K7M9X2" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Defina sua Nova Senha</label>
+                    <input type="password" id="activatePassword" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Nova senha segura" required>
+                </div>
+                <div id="activateFeedback" style="font-size: 0.8rem; margin-bottom: 12px; display: none;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-weight: 600;">
+                    Ativar Conta &amp; Definir Senha
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Gestão de Membros e Códigos de Ativação -->
+<div class="modal-backdrop" id="usersManageModal" style="display: none;" onclick="closeUsersManageModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <span>👥</span> Membros da Equipe &amp; Códigos de Acesso
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeUsersManageModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 14px;">
+                Cadastre novos membros ou force a geração de um novo código de 6 dígitos caso algum usuário tenha esquecido a senha.
+            </p>
+
+            <!-- Formulário de Novo Membro -->
+            <div style="background: var(--bg-column); border-radius: 8px; padding: 12px; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
+                <strong style="font-size: 0.85rem; color: var(--text-primary); display: block; margin-bottom: 8px;">+ Adicionar Novo Membro</strong>
+                <form id="formCreateUserWeb" onsubmit="handleCreateUserWebSubmit(event)" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <input type="text" id="newUsername" placeholder="Username (ex: julia)" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="text" id="newFullName" placeholder="Nome Completo" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="email" id="newEmail" placeholder="E-mail" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="text" id="newRole" placeholder="Cargo (ex: Developer)" value="Developer" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <div style="grid-column: span 2; display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+                            Gerar Código &amp; Cadastrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de Usuários Carregada Dinamicamente -->
+            <div id="usersListManageContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 12px;">Carregando usuários...</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeUsersManageModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- Script Central de Sessão & Autenticação Segura com Token HMAC e Bloqueio ---
+(function() {
+    // 1. Configurar HTMX para injetar token assinado e usuário
+    document.addEventListener('htmx:configRequest', function(evt) {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var user = localStorage.getItem('sprintt_user') || '';
+        if (token) {
+            evt.detail.headers['X-Sprintt-Token'] = token;
+            evt.detail.headers['Authorization'] = 'Bearer ' + token;
+        }
+        if (user) {
+            evt.detail.headers['X-Sprintt-User'] = user;
+        }
+    });
+
+    // 2. Verificar se está autenticado
+    verifyAuthSession();
+})();
+
+async function verifyAuthSession() {
+    var token = localStorage.getItem('sprintt_token');
+    if (!token) {
+        enforceLoginGatekeeper();
+        return;
+    }
+
+    try {
+        var resp = await fetch('/api/v1/auth/me', {
+            headers: { 
+                'X-Sprintt-Token': token,
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        if (!resp.ok) {
+            logoutSprinttUser();
+            return;
+        }
+        var data = await resp.json();
+        if (data && data.authenticated && data.user) {
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            updateNavSessionDisplay();
+            hideLoginGatekeeper();
+        } else {
+            logoutSprinttUser();
+        }
+    } catch (e) {
+        // Falha de rede temporaria, mantem display se token existir
+        updateNavSessionDisplay();
+    }
+}
+
+function enforceLoginGatekeeper() {
+    var bodyContent = document.querySelector('.content-body');
+    if (bodyContent) {
+        bodyContent.style.filter = 'blur(8px)';
+        bodyContent.style.pointerEvents = 'none';
+        bodyContent.style.userSelect = 'none';
+    }
+    openLoginModal('login');
+    var closeBtn = document.querySelector('#authModal .modal-close-btn');
+    if (closeBtn) closeBtn.style.display = 'none';
+}
+
+function hideLoginGatekeeper() {
+    var bodyContent = document.querySelector('.content-body');
+    if (bodyContent) {
+        bodyContent.style.filter = 'none';
+        bodyContent.style.pointerEvents = 'auto';
+        bodyContent.style.userSelect = 'auto';
+    }
+    var closeBtn = document.querySelector('#authModal .modal-close-btn');
+    if (closeBtn) closeBtn.style.display = 'block';
+}
+
+function toggleUserDropdown(e) {
+    if (e) e.stopPropagation();
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.toggle('show');
+}
+
+document.addEventListener('click', function() {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+});
+
+function updateNavSessionDisplay() {
+    var user = localStorage.getItem('sprintt_user') || 'Entrar';
+    var fullName = localStorage.getItem('sprintt_user_fullname') || user;
+    var navName = document.getElementById('navUserName');
+    var navAvatar = document.getElementById('navUserAvatar');
+    var ddName = document.getElementById('dropdownUserFullName');
+    var ddHandle = document.getElementById('dropdownUserHandle');
+
+    if (navName) navName.innerText = user;
+    if (navAvatar) navAvatar.innerText = fullName.substring(0, 1).toUpperCase();
+    if (ddName) ddName.innerText = fullName;
+    if (ddHandle) ddHandle.innerText = '@' + user;
+}
+
+function openLoginModal(tab) {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+    var modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'flex';
+    switchAuthTab(tab || 'login');
+}
+
+function closeAuthModal(e) {
+    if (!localStorage.getItem('sprintt_token')) {
+        return; // Impede fechar sem estar autenticado
+    }
+    if (e && e.target !== e.currentTarget) return;
+    var modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+    var btnL = document.getElementById('tabBtnLogin');
+    var btnA = document.getElementById('tabBtnActivate');
+    var fL = document.getElementById('formLogin');
+    var fA = document.getElementById('formActivate');
+    var fbL = document.getElementById('loginFeedback');
+    var fbA = document.getElementById('activateFeedback');
+    if (fbL) fbL.style.display = 'none';
+    if (fbA) fbA.style.display = 'none';
+
+    if (tab === 'activate') {
+        if (btnL) btnL.classList.remove('active');
+        if (btnA) btnA.classList.add('active');
+        if (fL) fL.style.display = 'none';
+        if (fA) fA.style.display = 'block';
+    } else {
+        if (btnA) btnA.classList.remove('active');
+        if (btnL) btnL.classList.add('active');
+        if (fA) fA.style.display = 'none';
+        if (fL) fL.style.display = 'block';
+    }
+}
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('loginUsername').value.trim();
+    var password = document.getElementById('loginPassword').value.trim();
+    var fb = document.getElementById('loginFeedback');
+
+    try {
+        var resp = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password)
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            localStorage.setItem('sprintt_token', data.token);
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            document.cookie = 'sprintt_token=' + data.token + '; path=/; SameSite=Strict';
+            hideLoginGatekeeper();
+            closeAuthModal();
+            location.reload();
+        } else {
+            fb.style.display = 'block';
+            fb.style.color = '#EF4444';
+            fb.innerText = data.message || 'Falha ao autenticar.';
+        }
+    } catch (err) {
+        fb.style.display = 'block';
+        fb.style.color = '#EF4444';
+        fb.innerText = 'Erro de conexão com o servidor.';
+    }
+}
+
+async function handleActivateSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('activateUsername').value.trim();
+    var code = document.getElementById('activateCode').value.trim().toUpperCase();
+    var password = document.getElementById('activatePassword').value.trim();
+    var fb = document.getElementById('activateFeedback');
+
+    try {
+        var resp = await fetch('/api/v1/auth/activate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'username=' + encodeURIComponent(username) + '&code=' + encodeURIComponent(code) + '&password=' + encodeURIComponent(password)
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            localStorage.setItem('sprintt_token', data.token);
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            document.cookie = 'sprintt_token=' + data.token + '; path=/; SameSite=Strict';
+            alert(data.message);
+            hideLoginGatekeeper();
+            closeAuthModal();
+            location.reload();
+        } else {
+            fb.style.display = 'block';
+            fb.style.color = '#EF4444';
+            fb.innerText = data.message || 'Código inválido ou bloqueado.';
+        }
+    } catch (err) {
+        fb.style.display = 'block';
+        fb.style.color = '#EF4444';
+        fb.innerText = 'Erro ao processar ativação.';
+    }
+}
+
+function logoutSprinttUser() {
+    localStorage.removeItem('sprintt_token');
+    localStorage.removeItem('sprintt_user');
+    localStorage.removeItem('sprintt_user_fullname');
+    document.cookie = 'sprintt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    location.reload();
+}
+
+function openUsersManagementModal() {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+    var modal = document.getElementById('usersManageModal');
+    if (modal) modal.style.display = 'flex';
+    loadUsersManageList();
+}
+
+function closeUsersManageModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    var modal = document.getElementById('usersManageModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function loadUsersManageList() {
+    var container = document.getElementById('usersListManageContainer');
+    if (!container) return;
+    try {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var resp = await fetch('/api/v1/users', {
+            headers: { 'X-Sprintt-Token': token, 'Authorization': 'Bearer ' + token }
+        });
+        var users = await resp.json();
+        if (!users || users.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px;">Nenhum usuário cadastrado.</div>';
+            return;
+        }
+        var html = '';
+        users.forEach(function(u) {
+            var isPending = u.status === 'PENDING_SETUP';
+            var statusBadge = isPending 
+                ? '<span style="background: rgba(234, 179, 8, 0.15); color: #EAB308; font-weight: 700; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;">Pendente: ' + (u.setupCode || 'Código Gerado') + '</span>'
+                : '<span style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;">Ativo</span>';
+
+            html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 6px;">' +
+                '<div>' +
+                    '<strong style="color: var(--text-primary); font-size: 0.85rem;">' + u.fullName + '</strong> ' +
+                    '<span style="color: var(--text-secondary); font-size: 0.78rem;">(@' + u.username + ')</span> ' +
+                    statusBadge +
+                    '<div style="font-size: 0.75rem; color: var(--text-muted);">' + u.role + ' &bull; ' + u.email + '</div>' +
+                '</div>' +
+                '<button type="button" class="btn-outline" style="font-size: 0.75rem; padding: 4px 8px;" onclick="forceResetUserCode(\x27' + u.id + '\x27, \x27' + u.username + '\x27)">'  +
+                    '🔑 Forçar Novo Código' +
+                '</button>' +
+            '</div>';
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<div style="color: #EF4444; text-align: center; padding: 12px;">Erro ao carregar usuários.</div>';
+    }
+}
+
+async function handleCreateUserWebSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('newUsername').value.trim();
+    var fullName = document.getElementById('newFullName').value.trim();
+    var email = document.getElementById('newEmail').value.trim();
+    var role = document.getElementById('newRole').value.trim();
+    var token = localStorage.getItem('sprintt_token') || '';
+
+    try {
+        var resp = await fetch('/api/v1/users', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Sprintt-Token': token,
+                'Authorization': 'Bearer ' + token
+            },
+            body: 'username=' + encodeURIComponent(username) + '&fullName=' + encodeURIComponent(fullName) + '&email=' + encodeURIComponent(email) + '&role=' + encodeURIComponent(role)
+        });
+        var newUser = await resp.json();
+        if (resp.ok) {
+            alert('Membro criado com sucesso!\n\n🔑 CÓDIGO DE 6 DÍGITOS: ' + newUser.setupCode + '\n\nEntregue este código ao usuário para definir a senha no primeiro acesso (válido por 24h).');
+            document.getElementById('formCreateUserWeb').reset();
+            loadUsersManageList();
+        } else {
+            alert('Erro ao cadastrar usuário.');
+        }
+    } catch (err) {
+        alert('Falha na comunicação com o servidor.');
+    }
+}
+
+async function forceResetUserCode(userId, username) {
+    if (!confirm('Deseja forçar a geração de um novo código de 6 dígitos para @' + username + '? A senha atual será invalidada.')) return;
+    try {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var resp = await fetch('/api/v1/users/' + userId + '/reset-code', { 
+            method: 'POST',
+            headers: { 'X-Sprintt-Token': token, 'Authorization': 'Bearer ' + token }
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            alert('Novo código gerado com sucesso para @' + username + ':\n\n🔑 CÓDIGO: ' + data.setupCode + '\n\nEntregue este código para o usuário redefinir a senha (válido por 24h).');
+            loadUsersManageList();
+        } else {
+            alert(data.message || 'Erro ao gerar novo código.');
+        }
+    } catch (err) {
+        alert('Falha de conexão.');
+    }
+}
+</script>
+
 </body>
 </html>

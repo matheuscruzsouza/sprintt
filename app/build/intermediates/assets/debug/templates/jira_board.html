@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
 <head>
+    <script>
+        // Gatekeeper Antecipado: Se não há token, oculta dados para evitar vazamento visual
+        (function() {
+            if (!localStorage.getItem('sprintt_token')) {
+                document.documentElement.classList.add('auth-pending');
+            }
+        })();
+    </script>
+    <style>
+        html.auth-pending .content-body,
+        html.auth-pending .kanban-grid,
+        html.auth-pending .backlog-container,
+        html.auth-pending .projects-grid {
+            display: none !important;
+        }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sprintt &bull; Quadro Kanban</title>
@@ -11,72 +27,83 @@
     <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
     <script src="/static/js/htmx.min.js"></script>
     <script>
-        // Carrega o tema imediatamente para evitar flash de tela
+        // Carrega o tema e estado da sidebar imediatamente para evitar flash de tela
         (function() {
             var savedTheme = localStorage.getItem('sprintt_theme') || localStorage.getItem('ticketmaster_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', savedTheme);
+
+            var sidebarPref = localStorage.getItem('sprintt_sidebar_collapsed');
+            if (sidebarPref === 'true' || (sidebarPref === null && window.innerWidth <= 1080)) {
+                document.documentElement.classList.add('sidebar-init-collapsed');
+            }
         })();
     </script>
 </head>
 <body>
 
+    <!-- Backdrop para fechamento da sidebar em dispositivos móveis -->
+    <div class="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
     <!-- Sidebar Estilo Linear / Aligno -->
-    <aside class="app-sidebar">
+    <aside class="app-sidebar" id="appSidebar">
         <div class="brand-section">
-            <div class="brand-icon" style="background: linear-gradient(135deg, #6366F1, #06B6D4); border-radius: 8px; box-shadow: 0 2px 10px rgba(99,102,241,0.35);">
+            <div class="brand-icon" style="background: linear-gradient(135deg, #6366F1, #06B6D4); border-radius: 8px; box-shadow: 0 2px 10px rgba(99,102,241,0.35); cursor: pointer;" onclick="toggleSidebar()" title="Recolher/Expandir menu lateral">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="13 17 18 12 13 7"></polyline>
                     <polyline points="6 17 11 12 6 7"></polyline>
                 </svg>
             </div>
-            <div>
+            <div class="brand-text">
                 <div class="brand-title" style="letter-spacing: -0.5px; font-weight: 800;">
                     <span>sprintt</span>
                 </div>
                 <span class="brand-badge" style="background: rgba(6,182,212,0.12); color: #06B6D4; font-weight: 700;">nano-spring 2.1.0</span>
             </div>
+            <button type="button" class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Recolher menu lateral">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
         </div>
 
         <div class="nav-section-title">Navegação</div>
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="/projetos">
+                <a href="/projetos" title="Projetos">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    Projetos
+                    <span>Projetos</span>
                 </a>
             </li>
             <li class="nav-item active">
-                <a href="/projetos/{{currentProjectKey}}/sprint">
+                <a href="/projetos/{{currentProjectKey}}/sprint" title="Sprint Ativa">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                    Sprint Ativa
+                    <span>Sprint Ativa</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/projetos/{{currentProjectKey}}/backlog">
+                <a href="/projetos/{{currentProjectKey}}/backlog" title="Backlog & Sprints">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                    Backlog & Sprints
+                    <span>Backlog & Sprints</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/projetos/{{currentProjectKey}}/relatorios">
+                <a href="/projetos/{{currentProjectKey}}/relatorios" title="Relatórios & Gestão">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-                    Relatórios & Gestão
+                    <span>Relatórios & Gestão</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/swagger-ui" target="_blank">
+                <a href="/swagger-ui" target="_blank" title="Swagger OpenAPI">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    Swagger OpenAPI
+                    <span>Swagger OpenAPI</span>
                 </a>
             </li>
         </ul>
 
         <div class="sidebar-footer">
-            <button type="button" class="theme-toggle-btn" onclick="toggleTheme()">
+            <button type="button" class="theme-toggle-btn" onclick="toggleTheme()" title="Alternar Modo Claro / Escuro">
                 <span id="themeToggleLabel">🌙 Modo Escuro</span>
                 <span id="themeToggleIcon">☀️</span>
             </button>
-            <div class="server-pill" onclick="openSslModal()" style="cursor: pointer;" title="Configuração SSL e mDNS">
+            <div class="server-pill" onclick="openSslModal()" style="cursor: pointer;" title="Configuração SSL e mDNS: sprintt.local:8443">
                 <span class="pulse-dot"></span>
                 <span>sprintt.local:8443</span>
             </div>
@@ -89,8 +116,8 @@
                 <span class="server-battery-level-text">{{serverBatteryLevel}}%</span>
                 <span style="font-size: 0.7rem; opacity: 0.85;">{{serverBatteryStatus}}</span>
             </div>
-            <a href="javascript:void(0)" onclick="openSslModal()" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: none; text-align: center; margin-top: 4px;">
-                🔒 Certificado SSL (Como Instalar)
+            <a href="javascript:void(0)" onclick="openSslModal()" class="sidebar-ssl-link" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: none; text-align: center; margin-top: 4px;" title="Certificado SSL (Como Instalar)">
+                🔒 <span>Certificado SSL (Como Instalar)</span>
             </a>
         </div>
     </aside>
@@ -99,23 +126,29 @@
     <main class="app-main">
         <header class="top-bar">
             <div class="top-bar-left">
-                <div class="breadcrumb-path">
-                    <a href="/projetos" style="color: var(--text-secondary); text-decoration: none;">Projetos</a>
-                    <span>/</span>
-                    <strong id="breadcrumbProject">{{currentProjectName}}</strong>
-                    <span>/</span>
-                    <span style="color: var(--text-muted);">Sprint Ativa</span>
-                </div>
+                <button type="button" class="topbar-sidebar-toggle" onclick="toggleSidebar()" title="Recolher / Expandir Menu lateral">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
 
-                <!-- Seletor Rápido de Projetos -->
-                <select id="projectSelect"
-                        style="padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary); cursor: pointer;"
-                        name="projectKey"
-                        onchange="window.location.href='/projetos/' + this.value + '/sprint'">
-                    {{#projects}}
-                    <option value="{{key}}" {{#isSelected}}selected{{/isSelected}}>{{name}} ({{key}})</option>
-                    {{/projects}}
-                </select>
+                <div class="breadcrumb-path">
+                    <a href="/projetos">Projetos</a>
+                    <span class="breadcrumb-sep">/</span>
+                    <select id="projectSelect"
+                            class="topbar-project-select"
+                            name="projectKey"
+                            onchange="window.location.href='/projetos/' + this.value + '/sprint'">
+                        {{#projects}}
+                        <option value="{{key}}" {{#isSelected}}selected{{/isSelected}}>{{name}} ({{key}})</option>
+                        {{/projects}}
+                    </select>
+                    <span id="breadcrumbProject" style="display:none">{{currentProjectName}}</span>
+                    <span class="breadcrumb-sep">/</span>
+                    <span class="breadcrumb-page-name" style="color: var(--text-muted);">Sprint Ativa</span>
+                </div>
             </div>
 
             <div class="top-bar-actions">
@@ -125,19 +158,47 @@
                      style="cursor: pointer;"
                      title="Servidor Android: {{serverBatteryFormatted}} (clique para detalhes)">
                     <span class="server-battery-icon">{{serverBatteryIcon}}</span>
-                    <span>Bateria Servidor: <strong class="server-battery-level-text">{{serverBatteryLevel}}%</strong></span>
+                    <span><span class="battery-label-full">Bateria Servidor: </span><strong class="server-battery-level-text">{{serverBatteryLevel}}%</strong></span>
                 </div>
 
-                <button type="button" class="btn-outline" onclick="openSslModal()" style="font-size: 0.8rem; padding: 6px 12px;">
-                    🔒 SSL &amp; mDNS
+                <button type="button" class="btn-outline topbar-ssl-btn" onclick="openSslModal()" style="font-size: 0.8rem; padding: 6px 12px;">
+                    <span>🔒</span> <span class="btn-text-full">SSL &amp; mDNS</span><span class="btn-text-short" style="display:none;">SSL</span>
                 </button>
 
-                <button type="button" class="btn-primary" onclick="openCreateModal()">
+                <button type="button" class="btn-primary topbar-create-btn" onclick="openCreateModal()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    Criar Ticket
+                    <span>Criar Ticket</span>
                 </button>
-                <a href="/swagger-ui" target="_blank" class="btn-outline">OpenAPI Docs</a>
-            </div>
+                <a href="/swagger-ui" target="_blank" class="btn-outline topbar-docs-btn">OpenAPI Docs</a>
+            
+
+<!-- Componente Reutilizável de Sessão do Usuário & Modais de Autenticação / Código de 6 Dígitos -->
+<div class="user-session-pill" id="userSessionPill" onclick="toggleUserDropdown(event)" title="Sessão do Usuário">
+    <div class="user-avatar-circle" id="navUserAvatar">?</div>
+    <span class="user-session-name" id="navUserName">Entrar</span>
+    <span style="font-size: 0.65rem; color: var(--text-muted);">▼</span>
+
+    <!-- Dropdown de Sessão -->
+    <div class="user-session-dropdown" id="userSessionDropdown" onclick="event.stopPropagation()">
+        <div class="dropdown-user-header">
+            <strong id="dropdownUserFullName" style="font-size: 0.88rem; color: var(--text-primary); display: block;">Visitante</strong>
+            <span id="dropdownUserHandle" style="font-size: 0.75rem; color: var(--text-secondary);">@anonimo</span>
+        </div>
+        <button type="button" class="dropdown-action-btn" onclick="openLoginModal('login')">
+            <span>🔄</span> Trocar de Usuário
+        </button>
+        <button type="button" class="dropdown-action-btn" onclick="openLoginModal('activate')">
+            <span>🔑</span> Ativar Conta / Primeiro Acesso
+        </button>
+        <button type="button" class="dropdown-action-btn" onclick="openUsersManagementModal()">
+            <span>👥</span> Gerenciar Equipe &amp; Códigos
+        </button>
+        <button type="button" class="dropdown-action-btn" style="color: #EF4444;" onclick="logoutSprinttUser()">
+            <span>🚪</span> Sair da Sessão
+        </button>
+    </div>
+</div>
+</div>
         </header>
 
         <section class="content-body">
@@ -151,7 +212,10 @@
                     <p class="page-subtitle" style="color: var(--text-muted);">Nenhuma sprint ativa em execução para este projeto</p>
                     {{/hasActiveSprint}}
                 </div>
-                <div style="display: flex; gap: 8px;">
+                <div class="page-header-actions">
+                    <button type="button" class="btn-outline" onclick="openColumnsManageModal()" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                        <span>⚙️</span> <span>Colunas</span>
+                    </button>
                     <a href="/projetos/{{currentProjectKey}}/backlog" class="btn-primary" style="font-size: 0.8rem;">Gerenciar Backlog / Sprints ➔</a>
                     <a href="/projetos" class="btn-outline" style="font-size: 0.8rem;">Ver Todos os Projetos</a>
                 </div>
@@ -161,25 +225,33 @@
             <div id="kanban-container">
                 {{#hasActiveSprint}}
                 <div class="kanban-grid">
-                    
-                    <!-- Coluna A Fazer -->
-                    <div class="kanban-col" data-status="TODO" 
+                    {{#columns}}
+                    <div class="kanban-col" data-col-id="{{id}}" data-status="{{category}}" 
                          ondragover="handleDragOver(event)" 
                          ondragleave="handleDragLeave(event)" 
-                         ondrop="handleDrop(event, 'TODO')">
+                         ondrop="handleDrop(event, '{{id}}')">
                         <div class="col-header">
                             <div class="col-title-wrap">
-                                <span class="col-status-dot dot-todo"></span>
-                                <span class="col-title">A Fazer</span>
+                                <span class="col-status-dot {{dotClass}}"></span>
+                                <span class="col-title">{{title}}</span>
                             </div>
-                            <span class="col-counter">{{todoCount}}</span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="col-counter {{#isWipExceeded}}wip-exceeded{{/isWipExceeded}}" title="{{#hasWipLimit}}Limite WIP: {{wipLimit}} ({{count}} itens){{/hasWipLimit}}{{^hasWipLimit}}{{count}} itens{{/hasWipLimit}}">
+                                    {{count}}{{#hasWipLimit}}/{{wipLimit}}{{/hasWipLimit}}
+                                </span>
+                            </div>
                         </div>
-                        {{#todoIssues}}
-                        <div class="issue-card type-{{type}}" 
+                        {{#issues}}
+                        <div class="issue-card type-{{type}} {{#isSubtask}}is-subtask{{/isSubtask}}" 
                              draggable="true" 
                              data-key="{{key}}"
                              ondragstart="handleDragStart(event, '{{key}}')"
                              ondragend="handleDragEnd(event)">
+                            {{#isSubtask}}
+                            <div class="card-parent-link" hx-get="/projetos/issues/{{parentKey}}/detail" hx-target="#modal-container" style="cursor: pointer;" title="Ticket Pai: {{parentTitle}}">
+                                ↳ <span>{{parentKey}}</span>
+                            </div>
+                            {{/isSubtask}}
                             <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
                                 <span class="issue-key">{{key}}</span>
                                 <span class="issue-type-badge">{{type}}</span>
@@ -190,77 +262,16 @@
                                     <span class="story-point-badge">{{storyPoints}} SP</span>
                                     <span>@{{assignee}}</span>
                                 </div>
+                                {{#hasSubtasks}}
+                                <span class="subtask-card-badge" title="{{subtaskDoneCount}} de {{subtaskTotalCount}} sub-tarefas concluídas">
+                                    ☑ {{subtaskProgressText}}
+                                </span>
+                                {{/hasSubtasks}}
                             </div>
                         </div>
-                        {{/todoIssues}}
+                        {{/issues}}
                     </div>
-
-                    <!-- Coluna Em Progresso -->
-                    <div class="kanban-col" data-status="IN_PROGRESS" 
-                         ondragover="handleDragOver(event)" 
-                         ondragleave="handleDragLeave(event)" 
-                         ondrop="handleDrop(event, 'IN_PROGRESS')">
-                        <div class="col-header">
-                            <div class="col-title-wrap">
-                                <span class="col-status-dot dot-inprogress"></span>
-                                <span class="col-title">Em Progresso</span>
-                            </div>
-                            <span class="col-counter">{{inProgressCount}}</span>
-                        </div>
-                        {{#inProgressIssues}}
-                        <div class="issue-card type-{{type}}" 
-                             draggable="true" 
-                             data-key="{{key}}"
-                             ondragstart="handleDragStart(event, '{{key}}')"
-                             ondragend="handleDragEnd(event)">
-                            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                                <span class="issue-key">{{key}}</span>
-                                <span class="issue-type-badge">{{type}}</span>
-                            </div>
-                            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
-                            <div class="card-bottom">
-                                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                                    <span class="story-point-badge">{{storyPoints}} SP</span>
-                                    <span>@{{assignee}}</span>
-                                </div>
-                            </div>
-                        </div>
-                        {{/inProgressIssues}}
-                    </div>
-
-                    <!-- Coluna Concluído -->
-                    <div class="kanban-col" data-status="DONE" 
-                         ondragover="handleDragOver(event)" 
-                         ondragleave="handleDragLeave(event)" 
-                         ondrop="handleDrop(event, 'DONE')">
-                        <div class="col-header">
-                            <div class="col-title-wrap">
-                                <span class="col-status-dot dot-done"></span>
-                                <span class="col-title">Concluído</span>
-                            </div>
-                            <span class="col-counter">{{doneCount}}</span>
-                        </div>
-                        {{#doneIssues}}
-                        <div class="issue-card type-{{type}}" 
-                             draggable="true" 
-                             data-key="{{key}}"
-                             ondragstart="handleDragStart(event, '{{key}}')"
-                             ondragend="handleDragEnd(event)">
-                            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                                <span class="issue-key">{{key}}</span>
-                                <span class="issue-type-badge">{{type}}</span>
-                            </div>
-                            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
-                            <div class="card-bottom">
-                                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                                    <span class="story-point-badge">{{storyPoints}} SP</span>
-                                    <span>@{{assignee}}</span>
-                                </div>
-                            </div>
-                        </div>
-                        {{/doneIssues}}
-                    </div>
-
+                    {{/columns}}
                 </div>
                 {{/hasActiveSprint}}
 
@@ -353,10 +364,72 @@
         </div>
     </div>
 
+    <!-- Modal de Configuração de Colunas do Projeto -->
+    <div class="modal-backdrop" id="columnsManageModal" style="display: none;" onclick="closeColumnsManageModal(event)">
+        <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <span>⚙️</span> Configurar Colunas do Quadro ({{currentProjectKey}})
+                </h3>
+                <button type="button" class="modal-close-btn" onclick="closeColumnsManageModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+                    Personalize o fluxo de trabalho deste projeto adicionando, reordenando ou ajustando os limites de Trabalho em Progresso (WIP).
+                </p>
+
+                <!-- Lista de Colunas Existentes -->
+                <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary); margin-bottom: 8px;">Colunas Atuais:</div>
+                <div id="columnsManageList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                    <!-- Preenchido dinamicamente via JS -->
+                </div>
+
+                <!-- Formulário de Adicionar Nova Coluna -->
+                <div style="background: var(--bg-column); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 14px;">
+                    <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 10px;">Adicionar Nova Coluna</h4>
+                    <form id="formAddColumn" onsubmit="handleAddColumnSubmit(event)">
+                        <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr auto; gap: 10px; align-items: flex-end;">
+                            <div>
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Título da Coluna</label>
+                                <input type="text" id="newColTitle" class="form-input" style="width: 100%; padding: 6px 10px; font-size: 0.82rem; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Ex: Code Review, QA..." required>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Categoria de Fluxo</label>
+                                <select id="newColCategory" class="form-select" style="width: 100%; padding: 6px 10px; font-size: 0.82rem; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);">
+                                    <option value="TO_DO">A Fazer (Inicial)</option>
+                                    <option value="IN_PROGRESS" selected>Em Progresso (Execução)</option>
+                                    <option value="DONE">Concluído (Final)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Limite WIP</label>
+                                <input type="number" id="newColWip" min="0" max="99" value="0" class="form-input" style="width: 100%; padding: 6px 10px; font-size: 0.82rem; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" title="0 = Sem limite">
+                            </div>
+                            <button type="submit" class="btn-primary" style="padding: 7px 14px; font-size: 0.82rem; white-space: nowrap;">
+                                + Adicionar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeColumnsManageModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Container Dinâmico para o Modal de Detalhes -->
     <div id="modal-container"></div>
 
     <script>
+        var currentProjectKey = '{{currentProjectKey}}';
+        var projectColumnsData = [];
+        try {
+            projectColumnsData = JSON.parse('{{projectColumnsJson}}' || '[]');
+        } catch(e) {
+            projectColumnsData = [];
+        }
+
         var draggedIssueKey = null;
 
         function updateThemeControls(theme) {
@@ -382,6 +455,34 @@
         // Sincroniza controles de tema
         var current = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeControls(current);
+
+        function toggleSidebar() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (!sidebar) return;
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('mobile-open');
+                var backdrop = document.querySelector('.sidebar-backdrop');
+                if (backdrop) backdrop.classList.toggle('active', sidebar.classList.contains('mobile-open'));
+            } else {
+                var isCollapsed = sidebar.classList.toggle('collapsed');
+                localStorage.setItem('sprintt_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+            }
+        }
+
+        function closeMobileSidebar() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+            var backdrop = document.querySelector('.sidebar-backdrop');
+            if (backdrop) backdrop.classList.remove('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var sidebar = document.querySelector('.app-sidebar');
+            if (sidebar && document.documentElement.classList.contains('sidebar-init-collapsed')) {
+                sidebar.classList.add('collapsed');
+                document.documentElement.classList.remove('sidebar-init-collapsed');
+            }
+        });
 
         function updateActiveProject(selectElem) {
             document.getElementById('hiddenProjectKey').value = selectElem.value;
@@ -472,7 +573,7 @@
             }
         }
 
-        function handleDrop(e, targetStatus) {
+        function handleDrop(e, targetColId) {
             e.preventDefault();
             var col = e.currentTarget;
             if (col) {
@@ -482,11 +583,189 @@
             var key = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || draggedIssueKey;
             if (!key) return;
 
-            var url = '/api/v1/issues/' + encodeURIComponent(key) + '/status?status=' + encodeURIComponent(targetStatus);
+            var url = '/api/v1/issues/' + encodeURIComponent(key) + '/status?columnId=' + encodeURIComponent(targetColId);
             htmx.ajax('PUT', url, {
                 target: '#kanban-container',
                 swap: 'innerHTML',
-                values: { status: targetStatus }
+                values: { columnId: targetColId }
+            });
+        }
+
+        // Funções do Modal de Gerenciamento de Colunas
+        async function openColumnsManageModal() {
+            var modal = document.getElementById('columnsManageModal');
+            if (modal) modal.style.display = 'flex';
+            await loadColumnsManageList();
+        }
+
+        function closeColumnsManageModal(e) {
+            if (e && e.target && e.target.id !== 'columnsManageModal') return;
+            var modal = document.getElementById('columnsManageModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function loadColumnsManageList() {
+            var container = document.getElementById('columnsManageList');
+            if (!container) return;
+            try {
+                var resp = await fetch('/api/v1/projects/' + encodeURIComponent(currentProjectKey) + '/columns');
+                if (!resp.ok) throw new Error('Falha ao obter colunas');
+                var cols = await resp.json();
+                projectColumnsData = cols;
+
+                if (!cols || cols.length === 0) {
+                    container.innerHTML = '<div style="color: var(--text-muted); padding: 8px;">Nenhuma coluna cadastrada.</div>';
+                    return;
+                }
+
+                var html = '';
+                cols.forEach(function(c, idx) {
+                    var isFirst = idx === 0;
+                    var isLast = idx === cols.length - 1;
+                    var categoryColor = c.category === 'TO_DO' ? 'var(--color-todo)' : (c.category === 'IN_PROGRESS' ? 'var(--color-inprogress)' : 'var(--color-done)');
+                    var categoryLabel = c.category === 'TO_DO' ? 'A Fazer' : (c.category === 'IN_PROGRESS' ? 'Em Progresso' : 'Concluído');
+
+                    html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 6px;">' +
+                        '<div style="display: flex; align-items: center; gap: 10px;">' +
+                            '<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ' + categoryColor + ';"></span>' +
+                            '<div>' +
+                                '<strong style="color: var(--text-primary); font-size: 0.88rem;">' + c.title + '</strong> ' +
+                                '<span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 6px;">(' + categoryLabel + ')</span>' +
+                                '<div style="font-size: 0.75rem; color: var(--text-secondary);">' + (c.wipLimit > 0 ? 'Limite WIP: ' + c.wipLimit : 'Sem limite WIP') + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div style="display: flex; align-items: center; gap: 6px;">' +
+                            '<button type="button" class="btn-outline" style="padding: 4px 8px; font-size: 0.75rem;" ' + (isFirst ? 'disabled style="opacity: 0.4;"' : 'onclick="moveColumnOrder(\x27' + c.id + '\x27, -1)"') + ' title="Mover para a esquerda">◀</button>' +
+                            '<button type="button" class="btn-outline" style="padding: 4px 8px; font-size: 0.75rem;" ' + (isLast ? 'disabled style="opacity: 0.4;"' : 'onclick="moveColumnOrder(\x27' + c.id + '\x27, 1)"') + ' title="Mover para a direita">▶</button>' +
+                            '<button type="button" class="btn-outline" style="padding: 4px 8px; font-size: 0.75rem;" onclick="promptEditColumnWip(\x27' + c.id + '\x27, ' + c.wipLimit + ')" title="Alterar limite WIP">✏️ WIP</button>' +
+                            (cols.length > 1 ? '<button type="button" class="btn-outline" style="padding: 4px 8px; font-size: 0.75rem; color: #EF4444;" onclick="deleteColumnAction(\x27' + c.id + '\x27)" title="Excluir coluna">🗑️</button>' : '') +
+                        '</div>' +
+                    '</div>';
+                });
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = '<div style="color: #EF4444; padding: 8px;">Erro ao carregar colunas.</div>';
+            }
+        }
+
+        async function handleAddColumnSubmit(e) {
+            e.preventDefault();
+            var title = document.getElementById('newColTitle').value.trim();
+            var category = document.getElementById('newColCategory').value;
+            var wipLimit = parseInt(document.getElementById('newColWip').value || '0', 10);
+            if (!title) return;
+
+            try {
+                var resp = await fetch('/api/v1/projects/' + encodeURIComponent(currentProjectKey) + '/columns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'title=' + encodeURIComponent(title) + '&category=' + encodeURIComponent(category) + '&wipLimit=' + wipLimit
+                });
+                if (resp.ok) {
+                    document.getElementById('formAddColumn').reset();
+                    await loadColumnsManageList();
+                    refreshKanbanGrid();
+                } else {
+                    alert('Erro ao adicionar coluna.');
+                }
+            } catch (err) {
+                alert('Erro de conexão ao adicionar coluna.');
+            }
+        }
+
+        async function promptEditColumnWip(colId, currentWip) {
+            var newWipStr = prompt('Defina o novo Limite WIP (Trabalho em Progresso) para esta coluna (0 = sem limite):', currentWip);
+            if (newWipStr === null) return;
+            var newWip = parseInt(newWipStr, 10);
+            if (isNaN(newWip) || newWip < 0) {
+                alert('Valor de WIP inválido.');
+                return;
+            }
+            try {
+                var col = projectColumnsData.find(function(c) { return c.id === colId; });
+                var resp = await fetch('/api/v1/projects/' + encodeURIComponent(currentProjectKey) + '/columns/' + encodeURIComponent(colId), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'title=' + encodeURIComponent(col ? col.title : '') + '&wipLimit=' + newWip
+                });
+                if (resp.ok) {
+                    await loadColumnsManageList();
+                    refreshKanbanGrid();
+                } else {
+                    alert('Erro ao atualizar WIP da coluna.');
+                }
+            } catch(e) {
+                alert('Erro de conexão.');
+            }
+        }
+
+        async function moveColumnOrder(colId, direction) {
+            var colIndex = projectColumnsData.findIndex(function(c) { return c.id === colId; });
+            if (colIndex < 0) return;
+            var targetIndex = colIndex + direction;
+            if (targetIndex < 0 || targetIndex >= projectColumnsData.length) return;
+
+            var newOrder = projectColumnsData.slice();
+            var item = newOrder.splice(colIndex, 1)[0];
+            newOrder.splice(targetIndex, 0, item);
+            var idList = newOrder.map(function(c) { return c.id; });
+
+            try {
+                var resp = await fetch('/api/v1/projects/' + encodeURIComponent(currentProjectKey) + '/columns-reorder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(idList)
+                });
+                if (resp.ok) {
+                    await loadColumnsManageList();
+                    refreshKanbanGrid();
+                } else {
+                    alert('Erro ao reordenar colunas.');
+                }
+            } catch (e) {
+                alert('Erro de comunicação.');
+            }
+        }
+
+        async function deleteColumnAction(colId) {
+            var otherCols = projectColumnsData.filter(function(c) { return c.id !== colId; });
+            if (otherCols.length === 0) {
+                alert('Não é possível remover a única coluna do quadro.');
+                return;
+            }
+
+            var promptMsg = 'Deseja excluir esta coluna?\n\nDigite o número da coluna de destino para onde migrar os tickets pendentes:\n';
+            otherCols.forEach(function(c, i) {
+                promptMsg += (i + 1) + ' - ' + c.title + '\n';
+            });
+            var choice = prompt(promptMsg, '1');
+            if (choice === null) return;
+            var choiceIdx = parseInt(choice, 10) - 1;
+            if (isNaN(choiceIdx) || choiceIdx < 0 || choiceIdx >= otherCols.length) {
+                alert('Opção inválida.');
+                return;
+            }
+            var targetColId = otherCols[choiceIdx].id;
+
+            try {
+                var resp = await fetch('/api/v1/projects/' + encodeURIComponent(currentProjectKey) + '/columns/' + encodeURIComponent(colId) + '?targetColumnId=' + encodeURIComponent(targetColId), {
+                    method: 'DELETE'
+                });
+                if (resp.ok) {
+                    await loadColumnsManageList();
+                    refreshKanbanGrid();
+                } else {
+                    alert('Erro ao excluir coluna.');
+                }
+            } catch (e) {
+                alert('Erro ao excluir coluna.');
+            }
+        }
+
+        function refreshKanbanGrid() {
+            htmx.ajax('GET', '/projetos/' + encodeURIComponent(currentProjectKey) + '/board-grid', {
+                target: '#kanban-container',
+                swap: 'innerHTML'
             });
         }
 
@@ -557,15 +836,43 @@
             if (modal) modal.style.display = 'none';
         }
 
-        // Inicializa notificação e polling de bateria a cada 30 segundos
+        // Monitoramento da Bateria em Tempo Real via Server-Sent Events (SSE)
+        var batteryEventSource = null;
+
+        function initBatterySse() {
+            if (typeof EventSource === 'undefined') {
+                showBatteryToast(false);
+                return;
+            }
+
+            if (batteryEventSource) {
+                try { batteryEventSource.close(); } catch(e) {}
+            }
+
+            batteryEventSource = new EventSource('/api/v1/server/battery-sse');
+
+            batteryEventSource.addEventListener('battery_update', function(e) {
+                try {
+                    var data = JSON.parse(e.data);
+                    updateBatteryElements(data);
+                    if (data.isLow) {
+                        showBatteryToast(false);
+                    }
+                } catch(err) {}
+            });
+
+            batteryEventSource.onopen = function() {
+                // Conexão SSE estabelecida com o servidor Android
+            };
+
+            batteryEventSource.onerror = function() {
+                // Em caso de desconexão momentânea, o EventSource reconecta automaticamente
+            };
+        }
+
         window.addEventListener('DOMContentLoaded', function() {
             showBatteryToast(false);
-            setInterval(function() {
-                fetch('/api/v1/server/battery')
-                    .then(function(r) { return r.json(); })
-                    .then(updateBatteryElements)
-                    .catch(function() {});
-            }, 30000);
+            initBatterySse();
         });
     </script>
 
@@ -620,5 +927,432 @@
             </div>
         </div>
     </div>
+
+
+<!-- Modal de Autenticação / Primeiro Acesso com Código de 6 Dígitos -->
+<div class="modal-backdrop" id="authModal" style="display: none;" onclick="closeAuthModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 440px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary);" id="authModalTitle">
+                Autenticação no sprintt
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeAuthModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">
+                    Entrar com Senha
+                </button>
+                <button type="button" class="auth-tab-btn" id="tabBtnActivate" onclick="switchAuthTab('activate')">
+                    Primeiro Acesso / Redefinir
+                </button>
+            </div>
+
+            <!-- Aba 1: Login com Senha -->
+            <form id="formLogin" onsubmit="handleLoginSubmit(event)" style="display: block;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Nome de Usuário (@handle)</label>
+                    <input type="text" id="loginUsername" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="ex: matheus ou carlos" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Senha</label>
+                    <input type="password" id="loginPassword" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Sua senha de acesso" required>
+                </div>
+                <div id="loginFeedback" style="font-size: 0.8rem; margin-bottom: 12px; display: none;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-weight: 600;">
+                    Entrar no Sistema
+                </button>
+            </form>
+
+            <!-- Aba 2: Primeiro Acesso com Código de 6 Dígitos -->
+            <form id="formActivate" onsubmit="handleActivateSubmit(event)" style="display: none;">
+                <div class="auth-banner-code">
+                    <strong>Código de Ativação</strong><br>
+                    Insira o código alfanumérico de 6 dígitos gerado pelo administrador para definir sua senha de acesso.
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Nome de Usuário (@handle)</label>
+                    <input type="text" id="activateUsername" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="ex: novo_membro" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Código Alfanumérico (6 Dígitos)</label>
+                    <input type="text" id="activateCode" maxlength="6" class="form-input auth-code-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Ex: K7M9X2" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block;">Defina sua Nova Senha</label>
+                    <input type="password" id="activatePassword" class="form-input" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-primary);" placeholder="Nova senha segura" required>
+                </div>
+                <div id="activateFeedback" style="font-size: 0.8rem; margin-bottom: 12px; display: none;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 10px; font-weight: 600;">
+                    Ativar Conta &amp; Definir Senha
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Gestão de Membros e Códigos de Ativação -->
+<div class="modal-backdrop" id="usersManageModal" style="display: none;" onclick="closeUsersManageModal(event)">
+    <div class="modal-dialog" onclick="event.stopPropagation()" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <span>👥</span> Membros da Equipe &amp; Códigos de Acesso
+            </h3>
+            <button type="button" class="modal-close-btn" onclick="closeUsersManageModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 14px;">
+                Cadastre novos membros ou force a geração de um novo código de 6 dígitos caso algum usuário tenha esquecido a senha.
+            </p>
+
+            <!-- Formulário de Novo Membro -->
+            <div style="background: var(--bg-column); border-radius: 8px; padding: 12px; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
+                <strong style="font-size: 0.85rem; color: var(--text-primary); display: block; margin-bottom: 8px;">+ Adicionar Novo Membro</strong>
+                <form id="formCreateUserWeb" onsubmit="handleCreateUserWebSubmit(event)" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <input type="text" id="newUsername" placeholder="Username (ex: julia)" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="text" id="newFullName" placeholder="Nome Completo" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="email" id="newEmail" placeholder="E-mail" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <input type="text" id="newRole" placeholder="Cargo (ex: Developer)" value="Developer" required style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.8rem; background: var(--bg-surface); color: var(--text-primary);">
+                    <div style="grid-column: span 2; display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn-primary" style="font-size: 0.8rem; padding: 6px 14px;">
+                            Gerar Código &amp; Cadastrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de Usuários Carregada Dinamicamente -->
+            <div id="usersListManageContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 12px;">Carregando usuários...</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeUsersManageModal()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- Script Central de Sessão & Autenticação Segura com Token HMAC e Bloqueio ---
+(function() {
+    // 1. Configurar HTMX para injetar token assinado e usuário
+    document.addEventListener('htmx:configRequest', function(evt) {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var user = localStorage.getItem('sprintt_user') || '';
+        if (token) {
+            evt.detail.headers['X-Sprintt-Token'] = token;
+            evt.detail.headers['Authorization'] = 'Bearer ' + token;
+        }
+        if (user) {
+            evt.detail.headers['X-Sprintt-User'] = user;
+        }
+    });
+
+    // 2. Verificar se está autenticado
+    verifyAuthSession();
+})();
+
+async function verifyAuthSession() {
+    var token = localStorage.getItem('sprintt_token');
+    if (!token) {
+        enforceLoginGatekeeper();
+        return;
+    }
+
+    try {
+        var resp = await fetch('/api/v1/auth/me', {
+            headers: { 
+                'X-Sprintt-Token': token,
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        if (!resp.ok) {
+            logoutSprinttUser();
+            return;
+        }
+        var data = await resp.json();
+        if (data && data.authenticated && data.user) {
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            updateNavSessionDisplay();
+            hideLoginGatekeeper();
+        } else {
+            logoutSprinttUser();
+        }
+    } catch (e) {
+        // Falha de rede temporaria, mantem display se token existir
+        updateNavSessionDisplay();
+    }
+}
+
+function enforceLoginGatekeeper() {
+    var bodyContent = document.querySelector('.content-body');
+    if (bodyContent) {
+        bodyContent.style.filter = 'blur(8px)';
+        bodyContent.style.pointerEvents = 'none';
+        bodyContent.style.userSelect = 'none';
+    }
+    openLoginModal('login');
+    var closeBtn = document.querySelector('#authModal .modal-close-btn');
+    if (closeBtn) closeBtn.style.display = 'none';
+}
+
+function hideLoginGatekeeper() {
+    var bodyContent = document.querySelector('.content-body');
+    if (bodyContent) {
+        bodyContent.style.filter = 'none';
+        bodyContent.style.pointerEvents = 'auto';
+        bodyContent.style.userSelect = 'auto';
+    }
+    var closeBtn = document.querySelector('#authModal .modal-close-btn');
+    if (closeBtn) closeBtn.style.display = 'block';
+}
+
+function toggleUserDropdown(e) {
+    if (e) e.stopPropagation();
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.toggle('show');
+}
+
+document.addEventListener('click', function() {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+});
+
+function updateNavSessionDisplay() {
+    var user = localStorage.getItem('sprintt_user') || 'Entrar';
+    var fullName = localStorage.getItem('sprintt_user_fullname') || user;
+    var navName = document.getElementById('navUserName');
+    var navAvatar = document.getElementById('navUserAvatar');
+    var ddName = document.getElementById('dropdownUserFullName');
+    var ddHandle = document.getElementById('dropdownUserHandle');
+
+    if (navName) navName.innerText = user;
+    if (navAvatar) navAvatar.innerText = fullName.substring(0, 1).toUpperCase();
+    if (ddName) ddName.innerText = fullName;
+    if (ddHandle) ddHandle.innerText = '@' + user;
+}
+
+function openLoginModal(tab) {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+    var modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'flex';
+    switchAuthTab(tab || 'login');
+}
+
+function closeAuthModal(e) {
+    if (!localStorage.getItem('sprintt_token')) {
+        return; // Impede fechar sem estar autenticado
+    }
+    if (e && e.target !== e.currentTarget) return;
+    var modal = document.getElementById('authModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+    var btnL = document.getElementById('tabBtnLogin');
+    var btnA = document.getElementById('tabBtnActivate');
+    var fL = document.getElementById('formLogin');
+    var fA = document.getElementById('formActivate');
+    var fbL = document.getElementById('loginFeedback');
+    var fbA = document.getElementById('activateFeedback');
+    if (fbL) fbL.style.display = 'none';
+    if (fbA) fbA.style.display = 'none';
+
+    if (tab === 'activate') {
+        if (btnL) btnL.classList.remove('active');
+        if (btnA) btnA.classList.add('active');
+        if (fL) fL.style.display = 'none';
+        if (fA) fA.style.display = 'block';
+    } else {
+        if (btnA) btnA.classList.remove('active');
+        if (btnL) btnL.classList.add('active');
+        if (fA) fA.style.display = 'none';
+        if (fL) fL.style.display = 'block';
+    }
+}
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('loginUsername').value.trim();
+    var password = document.getElementById('loginPassword').value.trim();
+    var fb = document.getElementById('loginFeedback');
+
+    try {
+        var resp = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password)
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            localStorage.setItem('sprintt_token', data.token);
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            document.cookie = 'sprintt_token=' + data.token + '; path=/; SameSite=Strict';
+            hideLoginGatekeeper();
+            closeAuthModal();
+            location.reload();
+        } else {
+            fb.style.display = 'block';
+            fb.style.color = '#EF4444';
+            fb.innerText = data.message || 'Falha ao autenticar.';
+        }
+    } catch (err) {
+        fb.style.display = 'block';
+        fb.style.color = '#EF4444';
+        fb.innerText = 'Erro de conexão com o servidor.';
+    }
+}
+
+async function handleActivateSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('activateUsername').value.trim();
+    var code = document.getElementById('activateCode').value.trim().toUpperCase();
+    var password = document.getElementById('activatePassword').value.trim();
+    var fb = document.getElementById('activateFeedback');
+
+    try {
+        var resp = await fetch('/api/v1/auth/activate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'username=' + encodeURIComponent(username) + '&code=' + encodeURIComponent(code) + '&password=' + encodeURIComponent(password)
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            localStorage.setItem('sprintt_token', data.token);
+            localStorage.setItem('sprintt_user', data.user.username);
+            localStorage.setItem('sprintt_user_fullname', data.user.fullName);
+            document.cookie = 'sprintt_token=' + data.token + '; path=/; SameSite=Strict';
+            alert(data.message);
+            hideLoginGatekeeper();
+            closeAuthModal();
+            location.reload();
+        } else {
+            fb.style.display = 'block';
+            fb.style.color = '#EF4444';
+            fb.innerText = data.message || 'Código inválido ou bloqueado.';
+        }
+    } catch (err) {
+        fb.style.display = 'block';
+        fb.style.color = '#EF4444';
+        fb.innerText = 'Erro ao processar ativação.';
+    }
+}
+
+function logoutSprinttUser() {
+    localStorage.removeItem('sprintt_token');
+    localStorage.removeItem('sprintt_user');
+    localStorage.removeItem('sprintt_user_fullname');
+    document.cookie = 'sprintt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    location.reload();
+}
+
+function openUsersManagementModal() {
+    var dd = document.getElementById('userSessionDropdown');
+    if (dd) dd.classList.remove('show');
+    var modal = document.getElementById('usersManageModal');
+    if (modal) modal.style.display = 'flex';
+    loadUsersManageList();
+}
+
+function closeUsersManageModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    var modal = document.getElementById('usersManageModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function loadUsersManageList() {
+    var container = document.getElementById('usersListManageContainer');
+    if (!container) return;
+    try {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var resp = await fetch('/api/v1/users', {
+            headers: { 'X-Sprintt-Token': token, 'Authorization': 'Bearer ' + token }
+        });
+        var users = await resp.json();
+        if (!users || users.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px;">Nenhum usuário cadastrado.</div>';
+            return;
+        }
+        var html = '';
+        users.forEach(function(u) {
+            var isPending = u.status === 'PENDING_SETUP';
+            var statusBadge = isPending 
+                ? '<span style="background: rgba(234, 179, 8, 0.15); color: #EAB308; font-weight: 700; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;">Pendente: ' + (u.setupCode || 'Código Gerado') + '</span>'
+                : '<span style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;">Ativo</span>';
+
+            html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 6px;">' +
+                '<div>' +
+                    '<strong style="color: var(--text-primary); font-size: 0.85rem;">' + u.fullName + '</strong> ' +
+                    '<span style="color: var(--text-secondary); font-size: 0.78rem;">(@' + u.username + ')</span> ' +
+                    statusBadge +
+                    '<div style="font-size: 0.75rem; color: var(--text-muted);">' + u.role + ' &bull; ' + u.email + '</div>' +
+                '</div>' +
+                '<button type="button" class="btn-outline" style="font-size: 0.75rem; padding: 4px 8px;" onclick="forceResetUserCode(\x27' + u.id + '\x27, \x27' + u.username + '\x27)">'  +
+                    '🔑 Forçar Novo Código' +
+                '</button>' +
+            '</div>';
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<div style="color: #EF4444; text-align: center; padding: 12px;">Erro ao carregar usuários.</div>';
+    }
+}
+
+async function handleCreateUserWebSubmit(e) {
+    e.preventDefault();
+    var username = document.getElementById('newUsername').value.trim();
+    var fullName = document.getElementById('newFullName').value.trim();
+    var email = document.getElementById('newEmail').value.trim();
+    var role = document.getElementById('newRole').value.trim();
+    var token = localStorage.getItem('sprintt_token') || '';
+
+    try {
+        var resp = await fetch('/api/v1/users', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Sprintt-Token': token,
+                'Authorization': 'Bearer ' + token
+            },
+            body: 'username=' + encodeURIComponent(username) + '&fullName=' + encodeURIComponent(fullName) + '&email=' + encodeURIComponent(email) + '&role=' + encodeURIComponent(role)
+        });
+        var newUser = await resp.json();
+        if (resp.ok) {
+            alert('Membro criado com sucesso!\n\n🔑 CÓDIGO DE 6 DÍGITOS: ' + newUser.setupCode + '\n\nEntregue este código ao usuário para definir a senha no primeiro acesso (válido por 24h).');
+            document.getElementById('formCreateUserWeb').reset();
+            loadUsersManageList();
+        } else {
+            alert('Erro ao cadastrar usuário.');
+        }
+    } catch (err) {
+        alert('Falha na comunicação com o servidor.');
+    }
+}
+
+async function forceResetUserCode(userId, username) {
+    if (!confirm('Deseja forçar a geração de um novo código de 6 dígitos para @' + username + '? A senha atual será invalidada.')) return;
+    try {
+        var token = localStorage.getItem('sprintt_token') || '';
+        var resp = await fetch('/api/v1/users/' + userId + '/reset-code', { 
+            method: 'POST',
+            headers: { 'X-Sprintt-Token': token, 'Authorization': 'Bearer ' + token }
+        });
+        var data = await resp.json();
+        if (resp.ok && data.success) {
+            alert('Novo código gerado com sucesso para @' + username + ':\n\n🔑 CÓDIGO: ' + data.setupCode + '\n\nEntregue este código para o usuário redefinir a senha (válido por 24h).');
+            loadUsersManageList();
+        } else {
+            alert(data.message || 'Erro ao gerar novo código.');
+        }
+    } catch (err) {
+        alert('Falha de conexão.');
+    }
+}
+</script>
+
 </body>
 </html>

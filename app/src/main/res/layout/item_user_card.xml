@@ -53,17 +53,50 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvUserRole"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_status_badge"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="3dp"
-            android:textColor="@color/jira_blue_primary"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            tools:text="Tech Lead" />
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvUserRole"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status_badge"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/jira_blue_primary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="Tech Lead" />
+
+            <TextView
+                android:id="@+id/tvUserStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#E08B00"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="Aguardando Senha" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnResetCode"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="0dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="4dp"
+                android:layout_marginTop="2dp"
+                android:text="Gerar Código"
+                android:textSize="11sp"
+                android:textAllCaps="false"
+                android:textColor="@color/jira_blue_primary" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

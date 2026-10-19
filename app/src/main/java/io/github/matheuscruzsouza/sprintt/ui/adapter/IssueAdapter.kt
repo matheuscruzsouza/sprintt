@@ -71,6 +71,15 @@ class IssueAdapter(
             (binding.tvStatusBadge.background as? GradientDrawable)?.setColor(statusBg)
             binding.tvStatusBadge.setTextColor(statusText)
 
+            // Indicador de Sub-tarefas
+            val progress = io.github.matheuscruzsouza.sprintt.SprinttApp.instance.ticketRepository.getSubtaskProgress(issue.key)
+            if (progress.total > 0) {
+                binding.tvSubtaskCount.visibility = android.view.View.VISIBLE
+                binding.tvSubtaskCount.text = "☑ ${progress.done}/${progress.total}"
+            } else {
+                binding.tvSubtaskCount.visibility = android.view.View.GONE
+            }
+
             binding.root.setOnClickListener { onIssueClick(issue) }
             binding.root.setOnLongClickListener {
                 onIssueLongClick(issue)

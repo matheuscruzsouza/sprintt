@@ -5,10 +5,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
@@ -22,10 +25,22 @@ public final class ActivityIssueDetailBinding implements ViewBinding {
   private final CoordinatorLayout rootView;
 
   @NonNull
+  public final Button btnAddSubtask;
+
+  @NonNull
   public final Button btnDeleteIssue;
 
   @NonNull
   public final Button btnStatusTransition;
+
+  @NonNull
+  public final CardView cardSubtasks;
+
+  @NonNull
+  public final LinearLayout llSubtasksContainer;
+
+  @NonNull
+  public final ProgressBar pbSubtasks;
 
   @NonNull
   public final Toolbar toolbarDetail;
@@ -51,15 +66,32 @@ public final class ActivityIssueDetailBinding implements ViewBinding {
   @NonNull
   public final TextView tvDetailType;
 
+  @NonNull
+  public final TextView tvNoSubtasks;
+
+  @NonNull
+  public final TextView tvParentLink;
+
+  @NonNull
+  public final TextView tvSubtaskHeader;
+
   private ActivityIssueDetailBinding(@NonNull CoordinatorLayout rootView,
-      @NonNull Button btnDeleteIssue, @NonNull Button btnStatusTransition,
+      @NonNull Button btnAddSubtask, @NonNull Button btnDeleteIssue,
+      @NonNull Button btnStatusTransition, @NonNull CardView cardSubtasks,
+      @NonNull LinearLayout llSubtasksContainer, @NonNull ProgressBar pbSubtasks,
       @NonNull Toolbar toolbarDetail, @NonNull TextView tvDetailAssignee,
       @NonNull TextView tvDetailDescription, @NonNull TextView tvDetailKey,
       @NonNull TextView tvDetailPriority, @NonNull TextView tvDetailStoryPoints,
-      @NonNull TextView tvDetailTitle, @NonNull TextView tvDetailType) {
+      @NonNull TextView tvDetailTitle, @NonNull TextView tvDetailType,
+      @NonNull TextView tvNoSubtasks, @NonNull TextView tvParentLink,
+      @NonNull TextView tvSubtaskHeader) {
     this.rootView = rootView;
+    this.btnAddSubtask = btnAddSubtask;
     this.btnDeleteIssue = btnDeleteIssue;
     this.btnStatusTransition = btnStatusTransition;
+    this.cardSubtasks = cardSubtasks;
+    this.llSubtasksContainer = llSubtasksContainer;
+    this.pbSubtasks = pbSubtasks;
     this.toolbarDetail = toolbarDetail;
     this.tvDetailAssignee = tvDetailAssignee;
     this.tvDetailDescription = tvDetailDescription;
@@ -68,6 +100,9 @@ public final class ActivityIssueDetailBinding implements ViewBinding {
     this.tvDetailStoryPoints = tvDetailStoryPoints;
     this.tvDetailTitle = tvDetailTitle;
     this.tvDetailType = tvDetailType;
+    this.tvNoSubtasks = tvNoSubtasks;
+    this.tvParentLink = tvParentLink;
+    this.tvSubtaskHeader = tvSubtaskHeader;
   }
 
   @Override
@@ -97,6 +132,12 @@ public final class ActivityIssueDetailBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnAddSubtask;
+      Button btnAddSubtask = ViewBindings.findChildViewById(rootView, id);
+      if (btnAddSubtask == null) {
+        break missingId;
+      }
+
       id = R.id.btnDeleteIssue;
       Button btnDeleteIssue = ViewBindings.findChildViewById(rootView, id);
       if (btnDeleteIssue == null) {
@@ -106,6 +147,24 @@ public final class ActivityIssueDetailBinding implements ViewBinding {
       id = R.id.btnStatusTransition;
       Button btnStatusTransition = ViewBindings.findChildViewById(rootView, id);
       if (btnStatusTransition == null) {
+        break missingId;
+      }
+
+      id = R.id.cardSubtasks;
+      CardView cardSubtasks = ViewBindings.findChildViewById(rootView, id);
+      if (cardSubtasks == null) {
+        break missingId;
+      }
+
+      id = R.id.llSubtasksContainer;
+      LinearLayout llSubtasksContainer = ViewBindings.findChildViewById(rootView, id);
+      if (llSubtasksContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.pbSubtasks;
+      ProgressBar pbSubtasks = ViewBindings.findChildViewById(rootView, id);
+      if (pbSubtasks == null) {
         break missingId;
       }
 
@@ -157,9 +216,29 @@ public final class ActivityIssueDetailBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityIssueDetailBinding((CoordinatorLayout) rootView, btnDeleteIssue,
-          btnStatusTransition, toolbarDetail, tvDetailAssignee, tvDetailDescription, tvDetailKey,
-          tvDetailPriority, tvDetailStoryPoints, tvDetailTitle, tvDetailType);
+      id = R.id.tvNoSubtasks;
+      TextView tvNoSubtasks = ViewBindings.findChildViewById(rootView, id);
+      if (tvNoSubtasks == null) {
+        break missingId;
+      }
+
+      id = R.id.tvParentLink;
+      TextView tvParentLink = ViewBindings.findChildViewById(rootView, id);
+      if (tvParentLink == null) {
+        break missingId;
+      }
+
+      id = R.id.tvSubtaskHeader;
+      TextView tvSubtaskHeader = ViewBindings.findChildViewById(rootView, id);
+      if (tvSubtaskHeader == null) {
+        break missingId;
+      }
+
+      return new ActivityIssueDetailBinding((CoordinatorLayout) rootView, btnAddSubtask,
+          btnDeleteIssue, btnStatusTransition, cardSubtasks, llSubtasksContainer, pbSubtasks,
+          toolbarDetail, tvDetailAssignee, tvDetailDescription, tvDetailKey, tvDetailPriority,
+          tvDetailStoryPoints, tvDetailTitle, tvDetailType, tvNoSubtasks, tvParentLink,
+          tvSubtaskHeader);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

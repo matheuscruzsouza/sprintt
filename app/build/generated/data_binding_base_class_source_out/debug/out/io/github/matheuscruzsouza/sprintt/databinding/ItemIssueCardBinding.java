@@ -40,10 +40,13 @@ public final class ItemIssueCardBinding implements ViewBinding {
   @NonNull
   public final TextView tvStoryPoints;
 
+  @NonNull
+  public final TextView tvSubtaskCount;
+
   private ItemIssueCardBinding(@NonNull CardView rootView, @NonNull TextView tvAssignee,
       @NonNull TextView tvIssueKey, @NonNull TextView tvIssueTitle, @NonNull TextView tvIssueType,
       @NonNull TextView tvPriority, @NonNull TextView tvStatusBadge,
-      @NonNull TextView tvStoryPoints) {
+      @NonNull TextView tvStoryPoints, @NonNull TextView tvSubtaskCount) {
     this.rootView = rootView;
     this.tvAssignee = tvAssignee;
     this.tvIssueKey = tvIssueKey;
@@ -52,6 +55,7 @@ public final class ItemIssueCardBinding implements ViewBinding {
     this.tvPriority = tvPriority;
     this.tvStatusBadge = tvStatusBadge;
     this.tvStoryPoints = tvStoryPoints;
+    this.tvSubtaskCount = tvSubtaskCount;
   }
 
   @Override
@@ -123,8 +127,14 @@ public final class ItemIssueCardBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tvSubtaskCount;
+      TextView tvSubtaskCount = ViewBindings.findChildViewById(rootView, id);
+      if (tvSubtaskCount == null) {
+        break missingId;
+      }
+
       return new ItemIssueCardBinding((CardView) rootView, tvAssignee, tvIssueKey, tvIssueTitle,
-          tvIssueType, tvPriority, tvStatusBadge, tvStoryPoints);
+          tvIssueType, tvPriority, tvStatusBadge, tvStoryPoints, tvSubtaskCount);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

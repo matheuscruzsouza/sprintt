@@ -125,6 +125,18 @@
                     android:padding="16dp">
 
                     <TextView
+                        android:id="@+id/tvParentLink"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:textColor="@color/jira_blue_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="↳ Tarefa-Pai: TM-2"
+                        tools:visibility="visible" />
+
+                    <TextView
                         android:id="@+id/tvDetailType"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -158,6 +170,80 @@
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         tools:text="Pontos de História: 3" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Card de Sub-tarefas -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardSubtasks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="6dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvSubtaskHeader"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="SUB-TAREFAS"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <Button
+                            android:id="@+id/btnAddSubtask"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+ Adicionar"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/pbSubtasks"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="8dp"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="@color/status_done_bg" />
+
+                    <LinearLayout
+                        android:id="@+id/llSubtasksContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/tvNoSubtasks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingVertical="8dp"
+                        android:text="Nenhuma sub-tarefa cadastrada."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:fontStyle="italic"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
 
                 </LinearLayout>
 

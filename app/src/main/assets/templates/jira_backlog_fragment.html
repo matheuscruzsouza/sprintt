@@ -56,6 +56,11 @@
                     <span class="backlog-issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container">{{title}}</span>
                 </div>
                 <div class="backlog-issue-right">
+                    {{#hasSubtasks}}
+                    <span class="subtask-card-badge" title="{{subtaskDoneCount}} de {{subtaskTotalCount}} sub-tarefas concluídas">
+                        ☑ {{subtaskProgressText}}
+                    </span>
+                    {{/hasSubtasks}}
                     <span class="status-badge status-{{status}}">{{status}}</span>
                     <span class="story-point-badge">{{storyPoints}} SP</span>
                     <span class="assignee-badge">@{{assignee}}</span>
@@ -125,6 +130,11 @@
                             <span class="backlog-issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container">{{title}}</span>
                         </div>
                         <div class="backlog-issue-right">
+                            {{#hasSubtasks}}
+                            <span class="subtask-card-badge" title="{{subtaskDoneCount}} de {{subtaskTotalCount}} sub-tarefas concluídas">
+                                ☑ {{subtaskProgressText}}
+                            </span>
+                            {{/hasSubtasks}}
                             <span class="story-point-badge">{{storyPoints}} SP</span>
                             <span class="assignee-badge">@{{assignee}}</span>
                         </div>
@@ -182,6 +192,11 @@
                     <span class="backlog-issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container">{{title}}</span>
                 </div>
                 <div class="backlog-issue-right">
+                    {{#hasSubtasks}}
+                    <span class="subtask-card-badge" title="{{subtaskDoneCount}} de {{subtaskTotalCount}} sub-tarefas concluídas">
+                        ☑ {{subtaskProgressText}}
+                    </span>
+                    {{/hasSubtasks}}
                     <span class="story-point-badge">{{storyPoints}} SP</span>
                     <span class="assignee-badge">@{{assignee}}</span>
                 </div>

@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
+import com.google.android.material.button.MaterialButton;
 import io.github.matheuscruzsouza.sprintt.R;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -18,6 +19,9 @@ import java.lang.String;
 public final class ItemUserCardBinding implements ViewBinding {
   @NonNull
   private final CardView rootView;
+
+  @NonNull
+  public final MaterialButton btnResetCode;
 
   @NonNull
   public final TextView tvUserAvatar;
@@ -31,14 +35,20 @@ public final class ItemUserCardBinding implements ViewBinding {
   @NonNull
   public final TextView tvUserRole;
 
-  private ItemUserCardBinding(@NonNull CardView rootView, @NonNull TextView tvUserAvatar,
-      @NonNull TextView tvUserFullName, @NonNull TextView tvUserHandle,
-      @NonNull TextView tvUserRole) {
+  @NonNull
+  public final TextView tvUserStatusBadge;
+
+  private ItemUserCardBinding(@NonNull CardView rootView, @NonNull MaterialButton btnResetCode,
+      @NonNull TextView tvUserAvatar, @NonNull TextView tvUserFullName,
+      @NonNull TextView tvUserHandle, @NonNull TextView tvUserRole,
+      @NonNull TextView tvUserStatusBadge) {
     this.rootView = rootView;
+    this.btnResetCode = btnResetCode;
     this.tvUserAvatar = tvUserAvatar;
     this.tvUserFullName = tvUserFullName;
     this.tvUserHandle = tvUserHandle;
     this.tvUserRole = tvUserRole;
+    this.tvUserStatusBadge = tvUserStatusBadge;
   }
 
   @Override
@@ -68,6 +78,12 @@ public final class ItemUserCardBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnResetCode;
+      MaterialButton btnResetCode = ViewBindings.findChildViewById(rootView, id);
+      if (btnResetCode == null) {
+        break missingId;
+      }
+
       id = R.id.tvUserAvatar;
       TextView tvUserAvatar = ViewBindings.findChildViewById(rootView, id);
       if (tvUserAvatar == null) {
@@ -92,8 +108,14 @@ public final class ItemUserCardBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ItemUserCardBinding((CardView) rootView, tvUserAvatar, tvUserFullName,
-          tvUserHandle, tvUserRole);
+      id = R.id.tvUserStatusBadge;
+      TextView tvUserStatusBadge = ViewBindings.findChildViewById(rootView, id);
+      if (tvUserStatusBadge == null) {
+        break missingId;
+      }
+
+      return new ItemUserCardBinding((CardView) rootView, btnResetCode, tvUserAvatar,
+          tvUserFullName, tvUserHandle, tvUserRole, tvUserStatusBadge);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

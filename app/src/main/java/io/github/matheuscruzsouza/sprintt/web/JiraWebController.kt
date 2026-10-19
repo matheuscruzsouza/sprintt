@@ -6,6 +6,8 @@ import com.github.matheuscruzsouza.nanospring.annotation.RequestParam
 import com.github.matheuscruzsouza.nanospring.annotation.RestController
 import com.github.matheuscruzsouza.nanospring.ui.ModelAndView
 import io.github.matheuscruzsouza.sprintt.SprinttApp
+import io.github.matheuscruzsouza.sprintt.data.model.BoardColumn
+import io.github.matheuscruzsouza.sprintt.data.model.ColumnCategory
 import io.github.matheuscruzsouza.sprintt.data.model.IssueStatus
 import io.github.matheuscruzsouza.sprintt.service.ServerBatteryProvider
 
@@ -96,20 +98,81 @@ class JiraWebController {
 
     @GetMethod("/issues/:key/detail")
     fun issueDetail(@PathVariable("key") key: String): ModelAndView {
-        val repo = SprinttApp.instance.ticketRepository
-        val issue = repo.getIssueByKey(key)
-        val mv = ModelAndView("jira_issue_detail_modal")
-        if (issue != null) {
-            mv.addObject("issue", issue)
-            mv.addObject("hasIssue", true)
-        } else {
-            mv.addObject("hasIssue", false)
-            mv.addObject("errorMessage", "Ticket não encontrado")
-        }
-        return mv
+        return renderIssueDetail(key)
     }
 
     companion object {
+        fun enrichIssue(issue: io.github.matheuscruzsouza.sprintt.data.model.Issue, repo: io.github.matheuscruzsouza.sprintt.data.repository.TicketRepository): Map<String, Any?> {
+            val subtasks = repo.getSubtasks(issue.key)
+            val hasSubtasks = subtasks.isNotEmpty()
+            val doneCount = subtasks.count { it.status == IssueStatus.DONE }
+            val totalCount = subtasks.size
+            val isSubtask = !issue.parentKey.isNullOrBlank()
+            val parentIssue = if (isSubtask) repo.getParent(issue.key) else null
+            return mapOf(
+                "id" to issue.id,
+                "key" to issue.key,
+                "title" to issue.title,
+                "description" to issue.description,
+                "type" to issue.type.name,
+                "priority" to issue.priority.displayName,
+                "status" to issue.status.name,
+                "storyPoints" to issue.storyPoints,
+                "assignee" to issue.assignee,
+                "sprintId" to issue.sprintId,
+                "parentKey" to issue.parentKey,
+                "parentTitle" to parentIssue?.title,
+                "isSubtask" to isSubtask,
+                "hasSubtasks" to hasSubtasks,
+                "subtaskDoneCount" to doneCount,
+                "subtaskTotalCount" to totalCount,
+                "subtaskProgressText" to "$doneCount/$totalCount"
+            )
+        }
+
+        fun renderIssueDetail(key: String): ModelAndView {
+            val repo = SprinttApp.instance.ticketRepository
+            val issue = repo.getIssueByKey(key)
+            val mv = ModelAndView("jira_issue_detail_modal")
+            if (issue != null) {
+                val subtasks = repo.getSubtasks(issue.key).map { sub ->
+                    mapOf(
+                        "id" to sub.id,
+                        "key" to sub.key,
+                        "title" to sub.title,
+                        "status" to sub.status.name,
+                        "storyPoints" to sub.storyPoints,
+                        "assignee" to sub.assignee,
+                        "isTodo" to (sub.status == IssueStatus.TODO),
+                        "isInProgress" to (sub.status == IssueStatus.IN_PROGRESS),
+                        "isDone" to (sub.status == IssueStatus.DONE)
+                    )
+                }
+                val progress = repo.getSubtaskProgress(issue.key)
+                val users = repo.getAllUsers()
+                val parentIssue = if (!issue.parentKey.isNullOrBlank()) repo.getIssueByKey(issue.parentKey!!) else null
+                val isSubtask = issue.type == io.github.matheuscruzsouza.sprintt.data.model.IssueType.SUBTASK || !issue.parentKey.isNullOrBlank()
+
+                mv.addObject("issue", issue)
+                mv.addObject("hasIssue", true)
+                mv.addObject("subtasks", subtasks)
+                mv.addObject("hasSubtasks", subtasks.isNotEmpty())
+                mv.addObject("subtaskTotal", progress.total)
+                mv.addObject("subtaskDone", progress.done)
+                mv.addObject("subtaskInProgress", progress.inProgress)
+                mv.addObject("subtaskTodo", progress.todo)
+                mv.addObject("subtaskPercent", progress.percent)
+                mv.addObject("users", users)
+                mv.addObject("isSubtask", isSubtask)
+                mv.addObject("parentIssue", parentIssue)
+                mv.addObject("hasParentIssue", parentIssue != null)
+            } else {
+                mv.addObject("hasIssue", false)
+                mv.addObject("errorMessage", "Ticket não encontrado")
+            }
+            return mv
+        }
+
         private fun appendBatteryInfo(mv: ModelAndView): ModelAndView {
             val battery = ServerBatteryProvider.getBatteryInfo(SprinttApp.instance)
             return mv.addObject("serverBatteryLevel", battery.level)
@@ -163,16 +226,52 @@ class JiraWebController {
             val activeSprint = repo.getActiveSprint(activeKey)
             val users = repo.getAllUsers()
             
-            // Apenas tickets que pertencem estritamente à sprint ativa são exibidos no quadro Kanban da Sprint Ativa
+            // Todos os tickets da sprint ativa (tarefas principais e sub-tarefas) são exibidos no quadro Kanban
             val baseIssues = if (activeSprint != null) {
                 repo.getIssuesBySprint(activeSprint.id)
             } else {
                 emptyList()
             }
 
-            val todoIssues = baseIssues.filter { it.status == IssueStatus.TODO }
-            val inProgressIssues = baseIssues.filter { it.status == IssueStatus.IN_PROGRESS }
-            val doneIssues = baseIssues.filter { it.status == IssueStatus.DONE }
+            val projectColumns = repo.getColumnsForProject(activeKey)
+            
+            // Garante que cada issue tenha seu columnId resolvido
+            baseIssues.forEach { iss ->
+                if (iss.columnId == null || projectColumns.none { it.id == iss.columnId }) {
+                    val fallbackCol = projectColumns.firstOrNull { 
+                        when (it.category) {
+                            ColumnCategory.TO_DO -> iss.status == IssueStatus.TODO
+                            ColumnCategory.IN_PROGRESS -> iss.status == IssueStatus.IN_PROGRESS
+                            ColumnCategory.DONE -> iss.status == IssueStatus.DONE
+                        }
+                    } ?: projectColumns.firstOrNull()
+                    iss.columnId = fallbackCol?.id
+                }
+            }
+
+            val columnsViewModel = projectColumns.map { col ->
+                val colIssues = baseIssues.filter { it.columnId == col.id }.map { enrichIssue(it, repo) }
+                val colPoints = colIssues.sumOf { (it["storyPoints"] as? Int) ?: 0 }
+                val isWipExceeded = col.wipLimit > 0 && colIssues.size > col.wipLimit
+                mapOf(
+                    "id" to col.id,
+                    "title" to col.title,
+                    "category" to col.category.name,
+                    "categoryDisplayName" to col.category.displayName,
+                    "dotClass" to col.category.dotClass,
+                    "orderIndex" to col.orderIndex,
+                    "wipLimit" to col.wipLimit,
+                    "hasWipLimit" to (col.wipLimit > 0),
+                    "isWipExceeded" to isWipExceeded,
+                    "count" to colIssues.size,
+                    "points" to colPoints,
+                    "issues" to colIssues
+                )
+            }
+
+            val todoIssues = baseIssues.filter { it.status == IssueStatus.TODO }.map { enrichIssue(it, repo) }
+            val inProgressIssues = baseIssues.filter { it.status == IssueStatus.IN_PROGRESS }.map { enrichIssue(it, repo) }
+            val doneIssues = baseIssues.filter { it.status == IssueStatus.DONE }.map { enrichIssue(it, repo) }
 
             val projectOptions = projects.map { p ->
                 mapOf(
@@ -192,6 +291,8 @@ class JiraWebController {
                 .addObject("activeSprintName", activeSprint?.name ?: "Nenhuma Sprint Ativa")
                 .addObject("activeSprintGoal", activeSprint?.goal ?: "")
                 .addObject("hasActiveSprint", activeSprint != null)
+                .addObject("columns", columnsViewModel)
+                .addObject("projectColumnsJson", com.google.gson.Gson().toJson(projectColumns))
                 .addObject("todoIssues", todoIssues)
                 .addObject("inProgressIssues", inProgressIssues)
                 .addObject("doneIssues", doneIssues)
@@ -218,15 +319,17 @@ class JiraWebController {
             val users = repo.getAllUsers()
             val activeSprint = repo.getActiveSprint(activeKey)
             val futureSprints = repo.getFutureSprints(activeKey)
-            val backlogIssues = repo.getProductBacklogIssues(activeKey)
+            val backlogIssuesRaw = repo.getTopLevelProductBacklogIssues(activeKey)
 
-            // Tickets da sprint ativa
-            val activeSprintIssues = if (activeSprint != null) repo.getIssuesBySprint(activeSprint.id) else emptyList()
+            // Tickets de nível superior da sprint ativa enriquecidos
+            val activeSprintIssuesRaw = if (activeSprint != null) repo.getTopLevelIssuesBySprint(activeSprint.id) else emptyList()
+            val activeSprintIssues = activeSprintIssuesRaw.map { enrichIssue(it, repo) }
 
-            // Map das sprints futuras com seus tickets
+            // Map das sprints futuras com seus tickets de nível superior
             val futureSprintsData = futureSprints.map { s ->
-                val sIssues = repo.getIssuesBySprint(s.id)
-                val points = sIssues.sumOf { it.storyPoints }
+                val sIssuesRaw = repo.getTopLevelIssuesBySprint(s.id)
+                val points = sIssuesRaw.sumOf { it.storyPoints }
+                val sIssues = sIssuesRaw.map { enrichIssue(it, repo) }
                 mapOf(
                     "id" to s.id,
                     "name" to s.name,
@@ -247,8 +350,9 @@ class JiraWebController {
                 sprintOptions.add(mapOf("id" to s.id, "name" to "Sprint Futura: ${s.name}"))
             }
 
-            val activeSprintPoints = activeSprintIssues.sumOf { it.storyPoints }
-            val backlogPoints = backlogIssues.sumOf { it.storyPoints }
+            val activeSprintPoints = activeSprintIssuesRaw.sumOf { it.storyPoints }
+            val backlogPoints = backlogIssuesRaw.sumOf { it.storyPoints }
+            val backlogIssues = backlogIssuesRaw.map { enrichIssue(it, repo) }
 
             val mv = ModelAndView(templateName)
                 .addObject("projects", projectOptions)
@@ -284,24 +388,30 @@ class JiraWebController {
                 repo.getActiveSprint(activeKey) ?: projectSprints.firstOrNull()
             }
 
-            val allProjectIssues = repo.getIssuesByProject(activeKey)
-            val sprintIssues = if (selectedSprint != null) {
+            // 1. Escopo de demandas de alto nível vs todas as demandas
+            val allSprintIssues = if (selectedSprint != null) {
                 repo.getIssuesBySprint(selectedSprint.id)
             } else {
-                allProjectIssues
+                repo.getIssuesByProject(activeKey)
             }
 
-            val totalPoints = sprintIssues.sumOf { it.storyPoints }
-            val doneIssues = sprintIssues.filter { it.status == IssueStatus.DONE }
-            val inProgressIssues = sprintIssues.filter { it.status == IssueStatus.IN_PROGRESS }
-            val todoIssues = sprintIssues.filter { it.status == IssueStatus.TODO }
+            val topLevelIssues = if (selectedSprint != null) {
+                repo.getTopLevelIssuesBySprint(selectedSprint.id)
+            } else {
+                repo.getAllIssues().filter { it.projectKey.equals(activeKey, ignoreCase = true) && it.parentKey.isNullOrBlank() }
+            }
+
+            val totalPoints = topLevelIssues.sumOf { it.storyPoints }
+            val doneIssues = topLevelIssues.filter { it.status == IssueStatus.DONE }
+            val inProgressIssues = topLevelIssues.filter { it.status == IssueStatus.IN_PROGRESS }
+            val todoIssues = topLevelIssues.filter { it.status == IssueStatus.TODO }
 
             val donePoints = doneIssues.sumOf { it.storyPoints }
             val inProgressPoints = inProgressIssues.sumOf { it.storyPoints }
             val todoPoints = todoIssues.sumOf { it.storyPoints }
             val completionRate = if (totalPoints > 0) (donePoints * 100) / totalPoints else 0
 
-            // 1. Cálculo de Pontos do Burndown Chart (10 dias de ciclo)
+            // 2. Burndown Chart baseado no ciclo real e tempo decorrido
             val totalDays = 10
             val chartW = 700.0
             val chartH = 280.0
@@ -318,35 +428,33 @@ class JiraWebController {
             val maxPointsVal = if (totalPoints > 0) totalPoints.toDouble() else 10.0
             val midPointsVal = (maxPointsVal / 2.0).toInt()
 
-            // Definir o dia atual de progresso (ex: dia 4 se houver sprint ativa, ou dia correspondente à taxa de entrega)
-            val currentDay = if (selectedSprint != null && selectedSprint.status == io.github.matheuscruzsouza.sprintt.data.model.SprintStatus.COMPLETED) {
-                totalDays
-            } else if (totalPoints > 0) {
-                // Progresso baseado em tarefas concluídas e em andamento
-                val progressDays = 1 + (donePoints * 7 / totalPoints).coerceIn(0, 7)
-                progressDays.coerceAtMost(8)
-            } else {
-                3
+            val oneDayMillis = 86_400_000L
+            val sprintStart = selectedSprint?.startDate ?: selectedSprint?.createdAt ?: System.currentTimeMillis()
+
+            val currentDayReal = when {
+                selectedSprint == null -> 0
+                selectedSprint.status == io.github.matheuscruzsouza.sprintt.data.model.SprintStatus.COMPLETED -> totalDays
+                selectedSprint.status == io.github.matheuscruzsouza.sprintt.data.model.SprintStatus.PLANNING -> 0
+                else -> {
+                    val elapsedDays = ((System.currentTimeMillis() - sprintStart).coerceAtLeast(0) / oneDayMillis).toInt()
+                    elapsedDays.coerceIn(0, totalDays)
+                }
             }
 
             for (day in 0..totalDays) {
                 val cx = ox + (day.toDouble() / totalDays.toDouble()) * plotW
                 val idealRemaining = maxPointsVal * (1.0 - (day.toDouble() / totalDays.toDouble()))
-                // cy = oy quando remaining = maxPointsVal; cy = oy + plotH quando remaining = 0
                 val cyIdeal = oy + (1.0 - (idealRemaining / maxPointsVal)) * plotH
                 idealCoords.add(String.format(java.util.Locale.US, "%.1f,%.1f", cx, cyIdeal))
 
-                if (day <= currentDay) {
-                    val remainingPoints = if (day == 0) {
-                        maxPointsVal
-                    } else if (day == currentDay) {
-                        (totalPoints - donePoints).coerceAtLeast(0).toDouble()
+                if (day <= currentDayReal) {
+                    val dayTimestamp = sprintStart + (day.toLong() * oneDayMillis) + (oneDayMillis - 1)
+                    val burnedPointsAtDay = if (day == 0) {
+                        0
                     } else {
-                        val fraction = day.toDouble() / currentDay.toDouble()
-                        val burnedSoFar = donePoints * fraction
-                        (maxPointsVal - burnedSoFar).coerceAtLeast(0.0)
+                        doneIssues.filter { (it.completedAt ?: it.createdAt) <= dayTimestamp }.sumOf { it.storyPoints }
                     }
-
+                    val remainingPoints = (totalPoints - burnedPointsAtDay).coerceAtLeast(0).toDouble()
                     val cyActual = oy + (1.0 - (remainingPoints / maxPointsVal)) * plotH
                     actualCoords.add(String.format(java.util.Locale.US, "%.1f,%.1f", cx, cyActual))
 
@@ -364,34 +472,35 @@ class JiraWebController {
                     mapOf(
                         "dayNumber" to day,
                         "dayLabel" to if (day == 0) "Início" else "D$day",
-                        "x" to cx.toInt()
+                        "x" to cx.toInt(),
+                        "isCurrentDay" to (day == currentDayReal)
                     )
                 )
             }
 
             val idealLinePoints = idealCoords.joinToString(" ")
             val actualLinePoints = actualCoords.joinToString(" ")
-            
-            // Área sob a curva real para preenchimento com gradiente moderno
-            val lastActualX = ox + (currentDay.toDouble() / totalDays.toDouble()) * plotW
+
+            val lastActualX = ox + (currentDayReal.toDouble() / totalDays.toDouble()) * plotW
             val actualAreaPoints = if (actualCoords.isNotEmpty()) {
                 val baseLeft = String.format(java.util.Locale.US, "%.1f,%.1f", ox, oy + plotH)
                 val baseRight = String.format(java.util.Locale.US, "%.1f,%.1f", lastActualX, oy + plotH)
                 "$baseLeft $actualLinePoints $baseRight"
             } else ""
 
-            // 2. Distribuição por Tipo de Demanda
-            val typeCountMap = sprintIssues.groupBy { it.type }
-            val totalCount = sprintIssues.size
+            // 3. Distribuição por Tipo de Demanda (incluindo SUBTASK)
+            val typeCountMap = allSprintIssues.groupBy { it.type }
+            val totalAllIssuesCount = allSprintIssues.size
             val typeDistribution = listOf(
                 io.github.matheuscruzsouza.sprintt.data.model.IssueType.STORY,
                 io.github.matheuscruzsouza.sprintt.data.model.IssueType.TASK,
                 io.github.matheuscruzsouza.sprintt.data.model.IssueType.BUG,
-                io.github.matheuscruzsouza.sprintt.data.model.IssueType.EPIC
+                io.github.matheuscruzsouza.sprintt.data.model.IssueType.EPIC,
+                io.github.matheuscruzsouza.sprintt.data.model.IssueType.SUBTASK
             ).map { t ->
                 val count = typeCountMap[t]?.size ?: 0
                 val pts = typeCountMap[t]?.sumOf { it.storyPoints } ?: 0
-                val pct = if (totalCount > 0) (count * 100) / totalCount else 0
+                val pct = if (totalAllIssuesCount > 0) (count * 100) / totalAllIssuesCount else 0
                 mapOf(
                     "typeName" to t.displayName,
                     "typeCode" to t.name,
@@ -401,10 +510,10 @@ class JiraWebController {
                 )
             }
 
-            // 3. Distribuição e Carga por Membro da Equipe
+            // 4. Distribuição e Carga por Membro da Equipe
             val users = repo.getAllUsers()
             val memberWorkload = users.map { u ->
-                val userIssues = sprintIssues.filter { it.assignee.equals(u.username, ignoreCase = true) || it.assignee.equals(u.fullName, ignoreCase = true) }
+                val userIssues = topLevelIssues.filter { it.assignee.equals(u.username, ignoreCase = true) || it.assignee.equals(u.fullName, ignoreCase = true) }
                 val uDone = userIssues.count { it.status == IssueStatus.DONE }
                 val uPts = userIssues.sumOf { it.storyPoints }
                 val uDonePts = userIssues.filter { it.status == IssueStatus.DONE }.sumOf { it.storyPoints }
@@ -455,7 +564,8 @@ class JiraWebController {
                 .addObject("inProgressPoints", inProgressPoints)
                 .addObject("todoPoints", todoPoints)
                 .addObject("completionRate", completionRate)
-                .addObject("totalIssuesCount", sprintIssues.size)
+                .addObject("totalIssuesCount", topLevelIssues.size)
+                .addObject("allIssuesCount", allSprintIssues.size)
                 .addObject("doneCount", doneIssues.size)
                 .addObject("inProgressCount", inProgressIssues.size)
                 .addObject("todoCount", todoIssues.size)
@@ -465,6 +575,8 @@ class JiraWebController {
                 .addObject("actualPointsList", actualPointsList)
                 .addObject("midPointsVal", midPointsVal)
                 .addObject("burndownDays", burndownDays)
+                .addObject("currentSprintDay", currentDayReal)
+                .addObject("totalSprintDays", totalDays)
                 .addObject("typeDistribution", typeDistribution)
                 .addObject("memberWorkload", memberWorkload)
             return appendBatteryInfo(mv)

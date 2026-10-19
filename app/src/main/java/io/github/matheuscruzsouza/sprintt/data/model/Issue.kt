@@ -43,12 +43,23 @@ data class Issue(
     var storyPoints: Int = 0,
     var assignee: String = "Unassigned",
     var sprintId: String? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    var parentKey: String? = null,
+    var completedAt: Long? = null,
+    var columnId: String? = null
 ) {
     val suggestedGitBranch: String
         get() {
-            val prefix = if (type == IssueType.BUG) "bug" else "feature"
-            val idPart = key.lowercase()
+            val prefix = when (type) {
+                IssueType.BUG -> "bug"
+                IssueType.SUBTASK -> "subtask"
+                else -> "feature"
+            }
+            val idPart = if (type == IssueType.SUBTASK && !parentKey.isNullOrBlank()) {
+                "${parentKey!!.lowercase()}-${key.lowercase()}"
+            } else {
+                key.lowercase()
+            }
             val normalizedTitle = java.text.Normalizer.normalize(title, java.text.Normalizer.Form.NFD)
                 .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
                 .lowercase()
@@ -65,3 +76,11 @@ data class Issue(
             }
         }
 }
+
+data class SubtaskProgress(
+    val total: Int,
+    val done: Int,
+    val inProgress: Int,
+    val todo: Int,
+    val percent: Int
+)

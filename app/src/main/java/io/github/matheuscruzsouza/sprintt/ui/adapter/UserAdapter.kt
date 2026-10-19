@@ -11,7 +11,8 @@ import io.github.matheuscruzsouza.sprintt.data.model.User
 import io.github.matheuscruzsouza.sprintt.databinding.ItemUserCardBinding
 
 class UserAdapter(
-    private val onUserClick: (User) -> Unit = {}
+    private val onUserClick: (User) -> Unit = {},
+    private val onResetCodeClick: (User) -> Unit = {}
 ) : ListAdapter<User, UserAdapter.UserViewHolder>(UserDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
@@ -47,6 +48,23 @@ class UserAdapter(
             binding.tvUserFullName.text = user.fullName
             binding.tvUserHandle.text = "@${user.username} • ${user.email}"
             binding.tvUserRole.text = user.role
+
+            if (user.status == "PENDING_SETUP") {
+                val codeDisplay = user.setupCode?.let { " ($it)" } ?: ""
+                binding.tvUserStatusBadge.visibility = android.view.View.VISIBLE
+                binding.tvUserStatusBadge.text = "Aguardando Senha$codeDisplay"
+                binding.tvUserStatusBadge.setTextColor(Color.parseColor("#E08B00"))
+                binding.btnResetCode.text = "Novo Código"
+            } else {
+                binding.tvUserStatusBadge.visibility = android.view.View.VISIBLE
+                binding.tvUserStatusBadge.text = "Ativo"
+                binding.tvUserStatusBadge.setTextColor(Color.parseColor("#10B981"))
+                binding.btnResetCode.text = "Redefinir"
+            }
+
+            binding.btnResetCode.setOnClickListener {
+                onResetCodeClick(user)
+            }
 
             binding.root.setOnClickListener { onUserClick(user) }
         }

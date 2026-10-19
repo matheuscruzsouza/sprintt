@@ -1,23 +1,32 @@
 {{#hasActiveSprint}}
 <div class="kanban-grid">
-    <!-- Coluna A Fazer -->
-    <div class="kanban-col" data-status="TODO" 
+    {{#columns}}
+    <div class="kanban-col" data-col-id="{{id}}" data-status="{{category}}" 
          ondragover="handleDragOver(event)" 
          ondragleave="handleDragLeave(event)" 
-         ondrop="handleDrop(event, 'TODO')">
+         ondrop="handleDrop(event, '{{id}}')">
         <div class="col-header">
             <div class="col-title-wrap">
-                <span class="col-status-dot dot-todo"></span>
-                <span class="col-title">A Fazer</span>
+                <span class="col-status-dot {{dotClass}}"></span>
+                <span class="col-title">{{title}}</span>
             </div>
-            <span class="col-counter">{{todoCount}}</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="col-counter {{#isWipExceeded}}wip-exceeded{{/isWipExceeded}}" title="{{#hasWipLimit}}Limite WIP: {{wipLimit}} ({{count}} itens){{/hasWipLimit}}{{^hasWipLimit}}{{count}} itens{{/hasWipLimit}}">
+                    {{count}}{{#hasWipLimit}}/{{wipLimit}}{{/hasWipLimit}}
+                </span>
+            </div>
         </div>
-        {{#todoIssues}}
-        <div class="issue-card type-{{type}}" 
+        {{#issues}}
+        <div class="issue-card type-{{type}} {{#isSubtask}}is-subtask{{/isSubtask}}" 
              draggable="true" 
              data-key="{{key}}"
              ondragstart="handleDragStart(event, '{{key}}')"
              ondragend="handleDragEnd(event)">
+            {{#isSubtask}}
+            <div class="card-parent-link" hx-get="/projetos/issues/{{parentKey}}/detail" hx-target="#modal-container" style="cursor: pointer;" title="Ticket Pai: {{parentTitle}}">
+                ↳ <span>{{parentKey}}</span>
+            </div>
+            {{/isSubtask}}
             <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
                 <span class="issue-key">{{key}}</span>
                 <span class="issue-type-badge">{{type}}</span>
@@ -28,76 +37,16 @@
                     <span class="story-point-badge">{{storyPoints}} SP</span>
                     <span>@{{assignee}}</span>
                 </div>
+                {{#hasSubtasks}}
+                <span class="subtask-card-badge" title="{{subtaskDoneCount}} de {{subtaskTotalCount}} sub-tarefas concluídas">
+                    ☑ {{subtaskProgressText}}
+                </span>
+                {{/hasSubtasks}}
             </div>
         </div>
-        {{/todoIssues}}
+        {{/issues}}
     </div>
-
-    <!-- Coluna Em Progresso -->
-    <div class="kanban-col" data-status="IN_PROGRESS" 
-         ondragover="handleDragOver(event)" 
-         ondragleave="handleDragLeave(event)" 
-         ondrop="handleDrop(event, 'IN_PROGRESS')">
-        <div class="col-header">
-            <div class="col-title-wrap">
-                <span class="col-status-dot dot-inprogress"></span>
-                <span class="col-title">Em Progresso</span>
-            </div>
-            <span class="col-counter">{{inProgressCount}}</span>
-        </div>
-        {{#inProgressIssues}}
-        <div class="issue-card type-{{type}}" 
-             draggable="true" 
-             data-key="{{key}}"
-             ondragstart="handleDragStart(event, '{{key}}')"
-             ondragend="handleDragEnd(event)">
-            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                <span class="issue-key">{{key}}</span>
-                <span class="issue-type-badge">{{type}}</span>
-            </div>
-            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
-            <div class="card-bottom">
-                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                    <span class="story-point-badge">{{storyPoints}} SP</span>
-                    <span>@{{assignee}}</span>
-                </div>
-            </div>
-        </div>
-        {{/inProgressIssues}}
-    </div>
-
-    <!-- Coluna Concluído -->
-    <div class="kanban-col" data-status="DONE" 
-         ondragover="handleDragOver(event)" 
-         ondragleave="handleDragLeave(event)" 
-         ondrop="handleDrop(event, 'DONE')">
-        <div class="col-header">
-            <div class="col-title-wrap">
-                <span class="col-status-dot dot-done"></span>
-                <span class="col-title">Concluído</span>
-            </div>
-            <span class="col-counter">{{doneCount}}</span>
-        </div>
-        {{#doneIssues}}
-        <div class="issue-card type-{{type}}" 
-             draggable="true" 
-             data-key="{{key}}"
-             ondragstart="handleDragStart(event, '{{key}}')"
-             ondragend="handleDragEnd(event)">
-            <div class="card-top" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                <span class="issue-key">{{key}}</span>
-                <span class="issue-type-badge">{{type}}</span>
-            </div>
-            <div class="issue-title" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">{{title}}</div>
-            <div class="card-bottom">
-                <div class="assignee-badge" hx-get="/projetos/issues/{{key}}/detail" hx-target="#modal-container" style="cursor: pointer;">
-                    <span class="story-point-badge">{{storyPoints}} SP</span>
-                    <span>@{{assignee}}</span>
-                </div>
-            </div>
-        </div>
-        {{/doneIssues}}
-    </div>
+    {{/columns}}
 </div>
 {{/hasActiveSprint}}
 

@@ -36,6 +36,10 @@ class IssueDetailActivity : AppCompatActivity() {
         binding.btnDeleteIssue.setOnClickListener {
             confirmDelete()
         }
+
+        binding.btnAddSubtask.setOnClickListener {
+            showAddSubtaskDialog()
+        }
     }
 
     private fun loadIssueData() {
@@ -56,12 +60,116 @@ class IssueDetailActivity : AppCompatActivity() {
             issue.description
         }
 
+        // Vínculo com a tarefa-pai
+        if (!issue.parentKey.isNullOrBlank()) {
+            binding.tvParentLink.visibility = android.view.View.VISIBLE
+            binding.tvParentLink.text = "↳ Sub-tarefa de: ${issue.parentKey}"
+            binding.tvParentLink.setOnClickListener {
+                val intent = android.content.Intent(this, IssueDetailActivity::class.java).apply {
+                    putExtra(EXTRA_ISSUE_KEY, issue.parentKey)
+                }
+                startActivity(intent)
+            }
+        } else {
+            binding.tvParentLink.visibility = android.view.View.GONE
+        }
+
         binding.tvDetailType.text = "Tipo: ${issue.type.displayName}"
         binding.tvDetailPriority.text = "Prioridade: ${issue.priority.displayName}"
         binding.tvDetailAssignee.text = "Responsável: @${issue.assignee}"
         binding.tvDetailStoryPoints.text = "Pontos de História: ${issue.storyPoints}"
 
         updateStatusButton(issue.status)
+        loadSubtasks(issue)
+    }
+
+    private fun loadSubtasks(issue: Issue) {
+        val isSubtask = issue.type == io.github.matheuscruzsouza.sprintt.data.model.IssueType.SUBTASK || !issue.parentKey.isNullOrBlank()
+        if (isSubtask) {
+            binding.cardSubtasks.visibility = android.view.View.GONE
+            return
+        }
+
+        binding.cardSubtasks.visibility = android.view.View.VISIBLE
+        val repo = SprinttApp.instance.ticketRepository
+        val subtasks = repo.getSubtasks(issue.key)
+        val progress = repo.getSubtaskProgress(issue.key)
+
+        binding.tvSubtaskHeader.text = "SUB-TAREFAS (${progress.done}/${progress.total})"
+        binding.pbSubtasks.progress = progress.percent
+
+        binding.llSubtasksContainer.removeAllViews()
+        if (subtasks.isEmpty()) {
+            binding.tvNoSubtasks.visibility = android.view.View.VISIBLE
+        } else {
+            binding.tvNoSubtasks.visibility = android.view.View.GONE
+            val inflater = layoutInflater
+            for (sub in subtasks) {
+                val subBinding = io.github.matheuscruzsouza.sprintt.databinding.ItemSubtaskBinding.inflate(inflater, binding.llSubtasksContainer, false)
+                subBinding.tvSubtaskKey.text = sub.key
+                subBinding.tvSubtaskTitle.text = sub.title
+                subBinding.tvSubtaskAssignee.text = "@${sub.assignee}"
+                subBinding.cbSubtaskStatus.isChecked = (sub.status == IssueStatus.DONE)
+
+                if (sub.status == IssueStatus.DONE) {
+                    subBinding.tvSubtaskTitle.paintFlags = subBinding.tvSubtaskTitle.paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                }
+
+                subBinding.cbSubtaskStatus.setOnCheckedChangeListener { _, isChecked ->
+                    val newStatus = if (isChecked) IssueStatus.DONE else IssueStatus.TODO
+                    repo.updateIssueStatus(sub.key, newStatus)
+                    loadSubtasks(issue)
+                }
+
+                subBinding.tvSubtaskTitle.setOnClickListener {
+                    val intent = android.content.Intent(this, IssueDetailActivity::class.java).apply {
+                        putExtra(EXTRA_ISSUE_KEY, sub.key)
+                    }
+                    startActivity(intent)
+                }
+
+                subBinding.btnDeleteSubtask.setOnClickListener {
+                    AlertDialog.Builder(this)
+                        .setTitle("Excluir sub-tarefa")
+                        .setMessage("Deseja excluir a sub-tarefa ${sub.key}?")
+                        .setPositiveButton("Excluir") { _, _ ->
+                            repo.deleteIssue(sub.key)
+                            loadSubtasks(issue)
+                            Toast.makeText(this, "Sub-tarefa excluída", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                }
+
+                binding.llSubtasksContainer.addView(subBinding.root)
+            }
+        }
+    }
+
+    private fun showAddSubtaskDialog() {
+        val issue = currentIssue ?: return
+        val input = android.widget.EditText(this).apply {
+            hint = "Título da sub-tarefa"
+            setPadding(40, 30, 40, 30)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Adicionar Sub-tarefa")
+            .setView(input)
+            .setPositiveButton("Adicionar") { _, _ ->
+                val title = input.text.toString().trim()
+                if (title.isNotBlank()) {
+                    SprinttApp.instance.ticketRepository.createSubtask(
+                        parentKey = issue.key,
+                        title = title,
+                        assignee = issue.assignee
+                    )
+                    loadSubtasks(issue)
+                    Toast.makeText(this, "Sub-tarefa adicionada!", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun updateStatusButton(status: IssueStatus) {
