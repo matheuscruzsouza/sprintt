@@ -565,6 +565,17 @@
             var modal = document.getElementById('sslModal');
             if (modal) modal.style.display = 'none';
         }
+
+        window.addEventListener('beforeunload', function() {
+            if (batteryEventSource) {
+                try { batteryEventSource.close(); } catch(e) {}
+            }
+        });
+        window.addEventListener('pagehide', function() {
+            if (batteryEventSource) {
+                try { batteryEventSource.close(); } catch(e) {}
+            }
+        });
     </script>
 
     <!-- Container de Notificação Flutuante da Bateria do Servidor -->

@@ -874,6 +874,17 @@
             showBatteryToast(false);
             initBatterySse();
         });
+
+        window.addEventListener('beforeunload', function() {
+            if (batteryEventSource) {
+                try { batteryEventSource.close(); } catch(e) {}
+            }
+        });
+        window.addEventListener('pagehide', function() {
+            if (batteryEventSource) {
+                try { batteryEventSource.close(); } catch(e) {}
+            }
+        });
     </script>
 
     <!-- Container de Notificação Flutuante da Bateria do Servidor -->

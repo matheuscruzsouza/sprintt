@@ -509,3 +509,112 @@ footer {
     margin: 2.5rem 0;
   }
 }
+
+/* ==========================================================
+   DIAGRAMA DE ARQUITETURA SVG
+   ========================================================== */
+.architecture-diagram-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  margin: 1.5rem 0 2.5rem 0;
+  transition: border-color 0.2s ease;
+}
+
+.architecture-diagram-card:hover {
+  border-color: #475569;
+}
+
+.diagram-toolbar {
+  background: #090d16;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.65rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.diagram-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.diagram-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.diagram-dots .dot.red { background: #ef4444; }
+.diagram-dots .dot.yellow { background: #f59e0b; }
+.diagram-dots .dot.green { background: #10b981; }
+
+.diagram-title {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.diagram-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--brand-blue);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  transition: all 0.2s ease;
+}
+
+.diagram-expand-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  color: #fff;
+  border-color: var(--brand-blue);
+}
+
+.diagram-svg-wrapper {
+  padding: 1.5rem 1rem;
+  background: radial-gradient(circle at 50% 20%, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.98) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.architecture-svg-img {
+  width: 100%;
+  max-width: 980px;
+  height: auto;
+  display: block;
+}
+
+.ascii-details {
+  margin-top: 1rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.ascii-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+  user-select: none;
+}
+
+.ascii-details summary:hover {
+  color: var(--brand-blue);
+}

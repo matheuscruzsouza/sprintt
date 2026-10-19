@@ -147,7 +147,6 @@ body {
 
 .app-sidebar.collapsed .nav-menu {
     width: 100%;
-    align-items: center;
 }
 
 .app-sidebar.collapsed .sidebar-footer {
