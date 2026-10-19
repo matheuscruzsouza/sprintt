@@ -37,7 +37,7 @@
 
     <section class="hero" style="padding-bottom: 2rem;">
       <div class="hero-badges">
-        <span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border-color: rgba(52, 211, 153, 0.3);">Versão v1.2.0</span>
+        <span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border-color: rgba(52, 211, 153, 0.3);">Versão v1.3.0</span>
         <span class="badge">Histórico Detalhado</span>
       </div>
       <h1>Registro de Alterações (Changelog)</h1>
@@ -46,6 +46,66 @@
 
     <!-- Linha do Tempo de Modificações -->
     <div style="display: flex; flex-direction: column; gap: 2.5rem; margin-top: 1.5rem;">
+
+      <!-- 0.1 COLUNAS KANBAN CONFIGURÁVEIS -->
+      <div class="card" style="border-left: 4px solid var(--brand-blue);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); margin-bottom: 0.5rem;">NOVA FEATURE</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">1. Colunas do Kanban Configuráveis por Projeto com Limites WIP</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">kanban / model / api</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Permite que cada projeto defina seu próprio fluxo de trabalho criando, renomeando, reordenando e excluindo colunas do quadro Kanban com limites de Trabalho em Progresso (WIP), categorias funcionais (A Fazer, Em Progresso, Concluído) e migração assistida de tickets ao excluir colunas.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Mudanças e Arquivos:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>BoardColumn.kt</code>: Nova entidade com campos <code>id</code>, <code>projectKey</code>, <code>title</code>, <code>category</code> (TO_DO, IN_PROGRESS, DONE), <code>orderIndex</code> e <code>wipLimit</code>.</li>
+          <li><code>TicketRepository.kt</code>: Implementada persistência em <code>columns_cache.json</code> com seed automático das colunas padrão e funções <code>getColumnsForProject</code>, <code>addColumn</code>, <code>updateColumn</code>, <code>deleteColumn</code> e <code>reorderColumns</code>.</li>
+          <li><code>ProjectApiController.kt</code>: Endpoints REST <code>GET /:key/columns</code>, <code>POST /:key/columns</code>, <code>PUT /:key/columns/:id</code>, <code>DELETE /:key/columns/:id</code> e <code>POST /:key/columns-reorder</code>.</li>
+          <li><code>jira_board.html</code> & <code>jira_kanban_grid.html</code>: Renderização dinâmica de colunas, indicador de estouro de WIP (<code>.wip-exceeded</code>), botão <strong>⚙️ Colunas</strong> e modal interativo completo de gestão.</li>
+        </ul>
+      </div>
+
+      <!-- 0.2 REDESIGN DO MODAL DE DETALHES -->
+      <div class="card" style="border-left: 4px solid var(--brand-indigo);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="background: rgba(129, 140, 248, 0.15); color: #818cf8; border-color: rgba(129, 140, 248, 0.3); margin-bottom: 0.5rem;">MELHORIA DE UX/UI</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">2. Redesign do Modal de Detalhes do Ticket em 2 Colunas</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">ui / templates / css</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Reestruturação completa do layout do modal de edição e visualização de tickets para utilizar o espaço horizontal de telas compactas e desktops (estilo Jira/Linear), reduzindo a rolagem vertical.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Mudanças e Arquivos:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>jira.css</code>: Criadas as classes <code>.modal-dialog-wide</code> (largura de até 960px / 95vw) e grid responsivo <code>.issue-modal-layout</code> (1fr 300px com breakpoint mobile &le; 768px).</li>
+          <li><code>jira_issue_detail_modal.html</code>: Coluna esquerda dedicada à Descrição ampliada, Sub-tarefas com barra de progresso e formulário rápido, e caixa de cópia da Branch Git. Coluna direita configurada como Sidebar compacta com metadados (Responsável, Prioridade, Story Points, Projeto e Tipo).</li>
+        </ul>
+      </div>
+
+      <!-- 0.3 TELEMETRIA DE BATERIA VIA SSE -->
+      <div class="card" style="border-left: 4px solid var(--brand-emerald);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border-color: rgba(52, 211, 153, 0.3); margin-bottom: 0.5rem;">ARQUITETURA TEMPO REAL</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">3. Telemetria de Bateria em Tempo Real via Server-Sent Events (SSE)</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">sse / reactive / android</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Substituição do pooling HTTP a cada 30 segundos por um canal persistente SSE nativo do Nano-Spring, eliminando sobrecarga de rede e consumo desnecessário de CPU no dispositivo servidor Android.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Mudanças e Arquivos:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>ServerApiController.kt</code>: Criado o endpoint <code>GET /api/v1/server/battery-sse</code> utilizando <code>SseEmitter</code> com keep-alive automático e lista thread-safe de ouvintes ativos.</li>
+          <li><code>SprinttApp.kt</code>: Registrado <code>BroadcastReceiver</code> para <code>ACTION_BATTERY_CHANGED</code>, <code>ACTION_POWER_CONNECTED</code> e <code>ACTION_POWER_DISCONNECTED</code> que dispara broadcast instantâneo no stream SSE sempre que o nível percentual ou status de recarga muda.</li>
+          <li>Templates HTML (<code>jira_board.html</code>, <code>jira_backlog.html</code>, <code>jira_projects.html</code>, <code>jira_reports.html</code>): Removido <code>setInterval</code> e integrado cliente JavaScript nativo com <code>EventSource</code> e reconexão automática.</li>
+        </ul>
+      </div>
 
       <!-- 1. BATERIA -->
       <div class="card" style="border-left: 4px solid var(--brand-blue);">

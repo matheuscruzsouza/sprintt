@@ -126,30 +126,30 @@
       </div>
     </section>
 
-    <!-- Notificação e Telemetria de Bateria -->
+    <!-- Notificação e Telemetria de Bateria via SSE -->
     <section class="section" id="bateria">
       <div class="section-header">
-        <h2>🔋 Notificação de Bateria do Servidor Web</h2>
-        <p>Como a interface web comunica a saúde energética do aparelho servidor.</p>
+        <h2>⚡ Telemetria de Bateria em Tempo Real (Server-Sent Events)</h2>
+        <p>Como o servidor Android transmite eventos energéticos instantâneos para a interface web.</p>
       </div>
 
       <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-        O módulo <code>ServerBatteryProvider.kt</code> registra um <code>BroadcastReceiver</code> com <code>Intent.ACTION_BATTERY_CHANGED</code> diretamente no contexto do Android.
-        As páginas web (Board, Backlog, Projetos e Relatórios) realizam polling periódico a cada 30 segundos no endpoint <code>/api/v1/server/battery</code> e exibem uma notificação toast automática:
+        O <code>SprinttApp.kt</code> registra um <code>BroadcastReceiver</code> com <code>Intent.ACTION_BATTERY_CHANGED</code>, <code>ACTION_POWER_CONNECTED</code> e <code>ACTION_POWER_DISCONNECTED</code>.
+        As páginas web (Board, Backlog, Projetos e Relatórios) conectam-se ao canal Server-Sent Events via <code>GET /api/v1/server/battery-sse</code> usando <code>EventSource</code>. Sempre que o celular tem alteração no percentual ou é plugado/desplugado do carregador, um evento <code>battery_update</code> é empurrado em tempo real com zero polling:
       </p>
 
       <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; gap: 1rem;">
         <div>
-          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Indicador no Cabeçalho Web:</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Indicador Reativo no Cabeçalho Web:</span>
           <div class="battery-preview-pill">
             <span class="dot"></span>
-            <span>Servidor: 85% (Carregando AC)</span>
+            <span>Servidor: 85% ⚡ (Carregando USB)</span>
           </div>
         </div>
 
         <div>
-          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Endpoint JSON:</span>
-          <span style="color: var(--brand-blue); font-family: var(--font-mono);">GET /api/v1/server/battery</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Canal SSE:</span>
+          <span style="color: var(--brand-blue); font-family: var(--font-mono);">GET /api/v1/server/battery-sse</span>
         </div>
       </div>
     </section>
@@ -243,9 +243,15 @@
           </thead>
           <tbody>
             <tr>
+              <td><span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">SSE</span></td>
+              <td><code>/api/v1/server/battery-sse</code></td>
+              <td>Stream contínuo de eventos de bateria em tempo real</td>
+              <td><code>event: battery_update\ndata: {...}</code></td>
+            </tr>
+            <tr>
               <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
               <td><code>/api/v1/server/battery</code></td>
-              <td>Retorna o estado da bateria do celular servidor</td>
+              <td>Retorna o estado pontual da bateria do celular servidor</td>
               <td><code>{"level":85, "isCharging":true, "plugType":"AC"}</code></td>
             </tr>
             <tr>
@@ -256,9 +262,21 @@
             </tr>
             <tr>
               <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
-              <td><code>/api/v1/sprints?projectId={id}</code></td>
-              <td>Lista as sprints associadas a um projeto</td>
-              <td><code>[{"id":"sprint-1", "status":"ACTIVE"}]</code></td>
+              <td><code>/api/v1/projects/:key/columns</code></td>
+              <td>Lista as colunas do quadro Kanban do projeto</td>
+              <td><code>[{"id":"col_1", "title":"Code Review", "wipLimit":3}]</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">POST</span></td>
+              <td><code>/api/v1/projects/:key/columns</code></td>
+              <td>Adiciona uma coluna personalizada com limite WIP</td>
+              <td><code>{"id":"uuid", "title":"QA", "category":"IN_PROGRESS"}</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399;">POST</span></td>
+              <td><code>/api/v1/projects/:key/columns-reorder</code></td>
+              <td>Reordena as colunas do quadro por lista de IDs</td>
+              <td><code>[{"id":"col_2", "orderIndex":0}, ...]</code></td>
             </tr>
             <tr>
               <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>
@@ -271,6 +289,12 @@
               <td><code>/api/v1/issues</code></td>
               <td>Cria uma nova issue no projeto/sprint</td>
               <td><code>{"id":"new-uuid", "status":"TODO"}</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">PUT</span></td>
+              <td><code>/api/v1/issues/:key/status</code></td>
+              <td>Move o ticket entre colunas ou status com <code>columnId</code></td>
+              <td><code>{"key":"TM-2", "columnId":"col_done"}</code></td>
             </tr>
             <tr>
               <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">GET</span></td>

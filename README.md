@@ -39,17 +39,21 @@ Sem necessidade de conexão com a nuvem, banco de dados externo ou containers Do
 
 - **📱 Aplicativo Android Nativo**:
   - **Dashboard**: Visão executiva com status do servidor HTTP e atalhos rápidos.
-  - **Gestão de Projetos & Equipe**: Criação e acompanhamento de squads, usuários e projetos.
-  - **Painel Analítico**: Taxa de conclusão de sprints, burndown de story points, distribuição por tipo (Story, Bug, Task, Epic) e carga de trabalho do time.
-- **🌐 Interface Web Ágil (HTMX + Mustache)**:
-  - **Quadro Kanban da Sprint Ativa**: Colunas dinâmicas (TO DO, IN PROGRESS, DONE) com isolamento rigoroso dos tickets da sprint atual.
-  - **Product Backlog**: Criação, priorização e organização de tickets em sprints futuras ou no backlog do produto.
-  - **Telemetria e Notificação de Bateria**: Indicador em tempo real e avisos flutuantes na interface web monitorando a carga do celular servidor.
+  - **Gestão de Projetos & Equipe**: Criação e acompanhamento de squads, usuários e projetos segregados.
+  - **Painel Analítico**: Taxa de conclusão de sprints, burndown de story points, distribuição por tipo (Story, Bug, Task, Subtask) e carga de trabalho do time.
+- **🌐 Interface Web Ágil (HTMX + JMustache)**:
+  - **Quadro Kanban Configurável por Projeto**: Adição, reordenação e exclusão de colunas com limites de WIP (Work in Progress), categorias de fluxo (`TO_DO`, `IN_PROGRESS`, `DONE`) e drag-and-drop dinâmico.
+  - **Modal de Detalhes Expandido (2 Colunas)**: Layout horizontal estilo Jira/Linear com coluna principal para descrição detalhada, sub-tarefas com progresso e branch Git, e sidebar para metadados e propriedades.
+  - **Product Backlog & Planejamento**: Criação rápida, priorização e organização de tickets em sprints futuras ou no backlog do produto.
+  - **Telemetria de Bateria em Tempo Real (SSE)**: Conexão Server-Sent Events (`/api/v1/server/battery-sse`) mantida aberta com keep-alive que notifica imediatamente no navegador qualquer mudança de carga ou plug do celular servidor.
+  - **Layout Otimizado & Barra Lateral Retrátil**: Interface responsiva e fluida para laptops compactos (1024×493 px) com barra lateral recolhível.
 - **🔒 Segurança & Descoberta Zeroconf**:
   - Anúncio automático de rede via **JmDNS** (`sprintt.local`).
   - Suporte completo a **HTTPS / TLS** com suporte a múltiplos domínios (SANs) e autoridade certificadora própria (CA).
-- **📡 API REST Completa**:
-  - Endpoints padronizados para integração de scripts, CI/CD ou outros clientes.
+  - Autenticação e primeiro acesso seguro via código alfanumérico de 6 dígitos.
+- **📡 API REST Completa & OpenAPI Swagger**:
+  - Endpoints padronizados para gerenciamento de projetos, colunas do quadro, issues, sub-tarefas e sprints.
+  - Documentação interativa em `/swagger-ui`.
 
 ---
 
@@ -61,19 +65,20 @@ Sem necessidade de conexão com a nuvem, banco de dados externo ou containers Do
 │                                                                        │
 │  ┌───────────────────────┐         ┌────────────────────────────────┐  │
 │  │   UI Nativa (Kotlin)  │         │     Sprintt Background Svc     │  │
-│  │  - Dashboard          │         │  - NanoHTTPD (Porta 8443 TLS)  │  │
+│  │  - Dashboard          │         │  - NanoSpring 2.1.0 (8443 TLS) │  │
 │  │  - Projetos & Sprints │◄───────►│  - JmDNS ("sprintt.local")     │  │
-│  │  - Equipe             │ SQLite  │  - ServerBatteryProvider       │  │
-│  │  - Analíticos         │ (Room)  │  - NanoSpring Dispatcher       │  │
+│  │  - Equipe             │ SQLite/ │  - SseEmitter (Battery Stream) │  │
+│  │  - Analíticos         │ JSON    │  - OpenAPI Swagger UI          │  │
 │  └───────────────────────┘         └───────────────┬────────────────┘  │
 └────────────────────────────────────────────────────┼───────────────────┘
-                                                     │ HTTPS / WSS
+                                                     │ HTTPS / SSE
                                                      ▼
                                       ┌───────────────────────────────┐
                                       │     Clientes Web da Rede      │
                                       │  - https://sprintt.local:8443 │
                                       │  - HTMX / JMustache UI        │
-                                      │  - Telemetria de Bateria      │
+                                      │  - SSE Battery Events         │
+                                      │  - Kanban Dinâmico (WIP)      │
                                       └───────────────────────────────┘
 ```
 
@@ -120,14 +125,22 @@ Para navegar com cadeado verde em `https://sprintt.local:8443`:
 ---
 
 ## 📡 Referência Rápida da API REST
-
+ 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `GET` | `/api/v1/server/battery` | Telemetria energética do celular (carga, status, plug) |
+| `GET` | `/api/v1/server/battery-sse` | Stream em tempo real de eventos da bateria (Server-Sent Events) |
+| `GET` | `/api/v1/server/battery` | Telemetria energética instantânea (JSON ou HTML badge) |
 | `GET` | `/api/v1/projects` | Lista todos os projetos cadastrados |
-| `GET` | `/api/v1/sprints?projectId={id}` | Lista as sprints de um projeto |
+| `POST` | `/api/v1/projects` | Cria um novo projeto segregado |
+| `GET` | `/api/v1/projects/:key/columns` | Lista as colunas configuradas para o quadro do projeto |
+| `POST` | `/api/v1/projects/:key/columns` | Adiciona uma coluna ao quadro com título, categoria e WIP |
+| `PUT` | `/api/v1/projects/:key/columns/:id` | Atualiza o título e limite WIP da coluna |
+| `DELETE` | `/api/v1/projects/:key/columns/:id` | Remove a coluna e migra tickets para outra coluna |
+| `POST` | `/api/v1/projects/:key/columns-reorder` | Reordena as colunas do quadro por lista de IDs |
 | `GET` | `/api/v1/issues?sprintId={id}` | Filtra tickets da sprint especificada |
 | `POST` | `/api/v1/issues` | Criação de novos tickets e histórias |
+| `PUT` | `/api/v1/issues/:key/status` | Move o ticket entre status ou colunas (`columnId`) |
+| `GET` | `/swagger-ui` | Documentação OpenAPI interativa Swagger |
 | `GET` | `/cert/rootCA.pem` | Download direto do certificado raiz da CA |
 
 ---
