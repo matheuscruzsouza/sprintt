@@ -103,7 +103,28 @@
         <p>O Sprintt é uma solução completa cliente-servidor autocontida rodando como serviço de primeiro plano no Android.</p>
       </div>
 
-      <div class="code-box">
+      <!-- Diagrama SVG de Arquitetura -->
+      <div class="architecture-diagram-card">
+        <div class="diagram-toolbar">
+          <div class="diagram-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span class="diagram-title">Estrutura Arquitetural &bull; Android Foreground Service + Nano-Spring</span>
+          <a href="assets/architecture.svg" target="_blank" class="diagram-expand-btn" title="Abrir SVG em tela cheia">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            Abrir SVG Completo
+          </a>
+        </div>
+        <div class="diagram-svg-wrapper">
+          <img src="assets/architecture.svg" alt="Diagrama de Arquitetura do Sprintt" class="architecture-svg-img" loading="lazy">
+        </div>
+      </div>
+
+      <details class="ascii-details">
+        <summary>Exibir representação esquemática em texto (ASCII)</summary>
+        <div class="code-box" style="margin-top: 0.75rem;">
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        DISPOSITIVO ANDROID                             │
 │                                                                        │
@@ -123,7 +144,8 @@
                                       │  - HTMX / JMustache UI        │
                                       │  - Telemetria de Bateria      │
                                       └───────────────────────────────┘
-      </div>
+        </div>
+      </details>
     </section>
 
     <!-- Notificação e Telemetria de Bateria via SSE -->

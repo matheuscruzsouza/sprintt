@@ -107,6 +107,27 @@
         </ul>
       </div>
 
+      <!-- 0.4 TUNING DO THREAD POOL E DIAGRAMA SVG DE ARQUITETURA -->
+      <div class="card" style="border-left: 4px solid var(--brand-amber);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div>
+            <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); margin-bottom: 0.5rem;">ESTABILIDADE &amp; DOCS</span>
+            <h2 style="font-size: 1.4rem; color: #fff;">4. Otimização do Pool de Threads HTTP &amp; Diagrama Visual da Arquitetura (SVG)</h2>
+          </div>
+          <span style="color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono);">server / threadpool / svg</span>
+        </div>
+        <p style="margin-bottom: 1rem; color: #cbd5e1;">
+          Correção de retenção de threads causada por concorrência de streams SSE no perfil <code>low-memory</code> através de configuração balanceada no <code>application.properties</code>, cleanup de conexões no frontend e inclusão de diagrama vetorial SVG de arquitetura na documentação oficial.
+        </p>
+        <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">Mudanças e Arquivos:</h4>
+        <ul style="padding-left: 1.3rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.8;">
+          <li><code>application.properties</code>: Configurado pool com <code>nano.server.threads.core=6</code>, <code>nano.server.threads.max=8</code>, <code>nano.server.threads.queue-capacity=20</code> e timeout de SSE <code>nano.sse.timeout-ms=45000</code>.</li>
+          <li>Templates HTML: Adicionados listeners de <code>beforeunload</code> e <code>pagehide</code> para fechar o <code>EventSource</code> ao navegar entre páginas, liberando threads no servidor de forma imediata.</li>
+          <li><code>docs/assets/architecture.svg</code>: Diagrama vetorial completo de alto nível ilustrando UI Nativa Kotlin, TicketRepository, Serviço em Primeiro Plano Nano-Spring, Barramento de Rede LAN e Clientes Web.</li>
+          <li><code>docs/index.html</code> &amp; <code>docs/style.css</code>: Inserido card responsivo com barra de ferramentas e suporte a visualização do SVG em tela cheia na seção de Arquitetura.</li>
+        </ul>
+      </div>
+
       <!-- 1. BATERIA -->
       <div class="card" style="border-left: 4px solid var(--brand-blue);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
